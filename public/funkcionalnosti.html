@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+  <meta charset="UTF-8">
+  <title>Funkcionalnosti odjemalca - HobbyHub</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; background-color: #f8f8f8; }
+    header, section { margin-bottom: 30px; padding: 15px; background: #fff; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    h1, h2, h3, h4, h5 { color: #222; }
+    ul { margin-left: 20px; }
+    .uml-diagram { max-width: 100%; height: auto; border: 1px solid #ccc; margin: 15px 0; }
+    .note { font-size: 0.85em; color: #777; }
+    .detail { margin-bottom: 25px; }
+    .subsection { margin-left: 25px; margin-bottom: 10px; }
+    .example { font-style: italic; color: #333; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Idejna zasnova: Funkcionalnosti odjemalca – HobbyHub</h1>
+    <p>
+      HobbyHub je aplikacija za organizacijo hobijev in osebnih aktivnosti, ki združuje planer z interaktivno gamifikacijo. Omogoča vnos dnevnih aktivnosti, spremljanje napredka, dodeljevanje nagrad ter personalizacijo vmesnika, kar uporabnikom pomaga pri učinkovitem upravljanju časa in doseganju ciljev.
+    </p>
+  </header>
+  <section id="funkcionalnosti-odjemalca">
+    <h2>/funkcionalnosti-odjemalca/</h2>
+    
+    <h3>1. Koledarski sistem</h3>
+    <div class="detail">
+      <p><strong>Namen:</strong> Omogočiti enostaven vnos, urejanje in pregled dnevnih aktivnosti.</p>
+      <div class="subsection">
+        <h4>Vhodi:</h4>
+        <ul>
+          <li><strong>Osnovni podatki:</strong> Naziv aktivnosti, datum (DD.MM.LLLL), začetni in končni čas (24-urna oblika).</li>
+          <li><strong>Opis aktivnosti:</strong> Kratek opis, ki pojasnjuje dejavnost (npr. "Sestanek s stranko").</li>
+          <li><strong>Kategorija:</strong> Tip aktivnosti (npr. delo, študij, šport, hobiji), kar omogoča filtriranje in barvno označevanje.</li>
+          <li><strong>Prioriteta:</strong> Določitev nujnosti (nizka, srednja, visoka).</li>
+          <li><strong>Dodatne opombe:</strong> Prostor za posebne pripombe, dodatne informacije.</li>
+          <li><strong>Validacija:</strong> Preverjanje, da je začetni čas pred končnim in da so vsi podatki ustrezno formatirani.</li>
+        </ul>
+      </div>
+      <div class="subsection">
+        <h4>Izhodi:</h4>
+        <ul>
+          <li><strong>Vizualni prikaz:</strong> Aktivnosti se prikažejo v koledarju kot časovni bloki, barvno kodirani glede na kategorijo in prioriteto.</li>
+          <li><strong>Filtriranje in iskanje:</strong> Možnost iskanja aktivnosti po datumu, kategoriji in prioriteti.</li>
+          <li><strong>Opozorila:</strong> Pred začetkom aktivnosti se sprožijo opomniki (vizualni in/ali zvočni), ki jih uporabnik lahko prilagodi.</li>
+        </ul>
+      </div>
+      <div class="subsection">
+        <h4>Primer uporabe:</h4>
+        <ul>
+          <li class="example">
+            Uporabnik vnese aktivnost "Sestanek s stranko" z datumom "15.03.2025", časom "09:00-10:00", kategorijo "delo" in prioriteto "visoka". Sistem preveri vnos, shrani podatke in prikaže aktivnost kot modri blok v koledarju. Pred sestankom se sproži opozorilo.
+          </li>
+        </ul>
+      </div>
+      <div class="subsection">
+        <h4>Dodatne tehnične in varnostne podrobnosti:</h4>
+        <ul>
+          <li>Vsi vnosi se shranjujejo lokalno v JSON datotekah za takojšnji dostop brez uporabe zunanjih povezav.</li>
+          <li>Implementirana je osnovna validacija z JavaScript funkcijami, ki preverjajo logiko časovnih intervalov.</li>
+          <li>Podatki se obdelujejo lokalno, s čimer se zmanjša tveganje uhajanja osebnih informacij.</li>
+        </ul>
+      </div>
+    </div>
+    
+    <h3>2. Sledenje napredka in dosežkov</h3>
+    <div class="detail">
+      <p><strong>Namen:</strong> Omogočiti uporabnikom spremljanje opravljenih nalog in doseženih ciljev ter zagotavljati statistične povzetke njihovega napredka.</p>
+      <div class="subsection">
+        <h4>Vhodi:</h4>
+        <ul>
+          <li><strong>Vnos opravljenih nalog:</strong> Datum, opis, trajanje opravljene naloge in indikator uspešnosti (npr. odstotek dokončanja).</li>
+          <li><strong>Merilniki uspešnosti:</strong> Podatki o doseženih ciljih, zaključeni projekti in primerjave med različnimi obdobji.</li>
+          <li><strong>Dodatni komentarji:</strong> Uporabniške ocene in povratne informacije, ki omogočajo samooceno napredka.</li>
+        </ul>
+      </div>
+      <div class="subsection">
+        <h4>Izhodi:</h4>
+        <ul>
+          <li><strong>Grafični prikazi:</strong> Črtni grafi, stolpčni diagrami in pie grafikoni, ki vizualno prikazujejo napredek skozi čas.</li>
+          <li><strong>Statistični povzetki:</strong> Izračuni, kot so skupno število opravljenih nalog, povprečni čas dokončanja in odstotek doseženih ciljev.</li>
+          <li><strong>Povratne informacije:</strong> Priporočila za izboljšave na podlagi analiziranih podatkov.</li>
+        </ul>
+      </div>
+      <div class="subsection">
+        <h4>Primer uporabe:</h4>
+        <ul>
+          <li class="example">
+            Uporabnik vnese dnevno poročilo o opravljenih nalogah. Sistem ugotovi, da je opravljenih 85 % načrtovanih nalog v zadnjem tednu ter prikaže črtni graf in podrobno statistiko, s čimer svetuje spremembo urnika za večjo produktivnost.
+          </li>
+        </ul>
+      </div>
+      <div class="subsection">
+        <h4>Dodatne tehnične in varnostne podrobnosti:</h4>
+        <ul>
+          <li>Izračuni in pretvorba podatkov se izvajajo lokalno s preprostimi algoritmi.</li>
+          <li>Grafični prikazi se ustvarjajo z uporabo HTML5 in CSS animacij brez zunanjih knjižnic.</li>
+          <li>Podatki se shranjujejo lokalno, s čimer se zagotavlja zasebnost in zmanjšuje tveganje zlorab.</li>
+        </ul>
+      </div>
+    </div>
+    
+    <h3>3. Gamifikacijski mehanizmi</h3>
+    <div class="detail">
+      <p><strong>Namen:</strong> Spodbujati motivacijo in angažiranost uporabnikov z nagrajevanjem na podlagi doseženih rezultatov in interakcij v aplikaciji.</p>
+      <div class="subsection">
+        <h4>Vhodi:</h4>
+        <ul>
+          <li><strong>Opravljenih nalog podatki:</strong> Informacije o uspešno zaključenih nalogah in doseženih ciljih.</li>
+          <li><strong>Interakcije uporabnikov:</strong> Komentarji, glasovanje (všečki in negativni glasovi) ter ocene prispevkov.</li>
+          <li><strong>Merilniki napredka:</strong> Število zbranih točk, badge-ov in nivojev, ki se primerjajo med uporabniki.</li>
+        </ul>
+      </div>
+      <div class="subsection">
+        <h4>Izhodi:</h4>
+        <ul>
+          <li><strong>Uporabniški profil:</strong> Prikaz točk, badge-ov in nivojev, ki jasno prikazuje napredek uporabnika.</li>
+          <li><strong>Lestvice:</strong> Primerjava doseženih rezultatov med uporabniki ali znotraj skupnosti.</li>
+          <li><strong>Prilagoditev izzivov:</strong> Sistem predlaga nove naloge glede na trenutno stopnjo napredka.</li>
+        </ul>
+      </div>
+      <div class="subsection">
+        <h4>Primer uporabe:</h4>
+        <ul>
+          <li class="example">
+            Po tedenskem izzivu aplikacija samodejno dodeli uporabniku 150 točk in badge "Produktivni začetnik", nato pa prikaže lestvico rezultatov in predlaga nove izzive.
+          </li>
+        </ul>
+      </div>
+      <div class="subsection">
+        <h4>Dodatne tehnične in varnostne podrobnosti:</h4>
+        <ul>
+          <li>Algoritmi za dodeljevanje točk so vnaprej določeni in shranjeni lokalno.</li>
+          <li>Uporabniški vmesnik se samodejno posodablja ob vsakem vnosu interakcij.</li>
+          <li>Podatki o nagradah se obdelujejo lokalno, kar preprečuje manipulacijo s podatki.</li>
+        </ul>
+      </div>
+    </div>
+    
+    <h3>4. Personalizacija uporabniškega vmesnika</h3>
+    <div class="detail">
+      <p><strong>Namen:</strong> Omogočiti, da uporabnik prilagodi videz in funkcionalnosti aplikacije glede na svoje osebne preference, s čimer se izboljša celotna uporabniška izkušnja.</p>
+      <div class="subsection">
+        <h4>Vhodi:</h4>
+        <ul>
+          <li><strong>Uporabniške nastavitve:</strong> Izbira barvnih shem, tipografije, postavitve elementov, ozadij in možnosti prikaza določenih modulov.</li>
+          <li><strong>Personalizirani moduli:</strong> Možnost vklopa ali izklopa določenih funkcij glede na želje uporabnika.</li>
+        </ul>
+      </div>
+      <div class="subsection">
+        <h4>Izhodi:</h4>
+        <ul>
+          <li><strong>Prilagojen vmesnik:</strong> Neposredna sprememba videza aplikacije ob spremembi nastavitev (barvna shema, tipografija, postavitev).</li>
+          <li><strong>Več profilov:</strong> Možnost shranjevanja in preklapljanja med različnimi uporabniškimi profili, vsak z lastnimi nastavitvami.</li>
+        </ul>
+      </div>
+      <div class="subsection">
+        <h4>Primer uporabe:</h4>
+        <ul>
+          <li class="example">
+            Uporabnik spremeni barvno shemo in tip pisave v nastavitvah. Aplikacija se takoj osveži in prikaže nov videz. Uporabnik lahko preklopi med profili, npr. "Delo" in "Prosti čas".
+          </li>
+        </ul>
+      </div>
+      <div class="subsection">
+        <h4>Dodatne tehnične in varnostne podrobnosti:</h4>
+        <ul>
+          <li>Nastavitve se shranjujejo v lokalne JSON datoteke, ki se naložijo ob zagonu aplikacije.</li>
+          <li>Uporabniški vmesnik uporablja CSS animacije za gladke prehode ob spremembah.</li>
+          <li>Dostop do nastavitev je omejen na lokalni sistem, kar preprečuje nepooblaščen dostop do osebnih preferenc.</li>
+        </ul>
+      </div>
+    </div>
+    
+    <h3>5. Upravljanje nalog</h3>
+        <div class="detail">
+            <p><strong>Namen:</strong> Omogočiti uporabnikom ustvarjanje, urejanje in spremljanje nalog s prioritetami in opomniki.</p>
+            <div class="subsection">
+                <h4>Vhodi:</h4>
+                <ul>
+                    <li><strong>Osnovni podatki:</strong> Naziv naloge, rok, prioriteta, podroben opis.</li>
+                    <li><strong>Opomniki:</strong> Nastavljeni obvestilni alarmi (e-pošta, potisna obvestila, SMS).</li>
+                    <li><strong>Kategorija:</strong> Oznake nalog (npr. delo, osebno, šport, prosti čas).</li>
+                    <li><strong>Povezani dokumenti:</strong> Možnost nalaganja datotek in povezovanja z obstoječimi dokumenti.</li>
+                    <li><strong>Podnaloge:</strong> Razdelitev naloge na manjše korake za boljše sledenje.</li>
+                </ul>
+            </div>
+            <div class="subsection">
+                <h4>Izhodi:</h4>
+                <ul>
+                    <li><strong>Prikaz vmesnika:</strong> Seznam nalog v obliki kartic ali koledarskega pregleda.</li>
+                    <li><strong>Napredni filtri:</strong> Iskanje in razvrščanje nalog po prioriteti, datumu ali kategoriji.</li>
+                    <li><strong>Obvestila:</strong> Opomniki in opozorila o prihajajočih nalogah.</li>
+                </ul>
+            </div>
+            <div class="subsection">
+                <h4>Primer uporabe:</h4>
+                <ul>
+                    <li class="example">Uporabnik vnese nalogo "Oddaja poročila" z datumom "20.03.2025", prioriteto "visoka", opomnikom en dan prej ter doda povezavo do relevantnega dokumenta.</li>
+                </ul>
+            </div>
+            <div class="subsection">
+                <h4>Dodatne tehnične in varnostne podrobnosti:</h4>
+                <ul>
+                    <li>Podatki o nalogah se shranjujejo v šifrirani podatkovni bazi.</li>
+                    <li>Podpira možnost sinhronizacije v oblaku za dostop na več napravah.</li>
+                    <li>Implementirana dvofaktorska avtentikacija za varnejši dostop.</li>
+                </ul>
+            </div>
+        </div>
+    
+        <h3>6. Prijava in registracija</h3>
+        <div class="detail">
+            <p><strong>Namen:</strong> Omogočiti uporabnikom varno prijavo in registracijo v sistem, kar jim omogoča shranjevanje in sinhronizacijo podatkov med napravami.</p>
+            <div class="subsection">
+                <h4>Vhodi:</h4>
+                <ul>
+                    <li><strong>Prijavni podatki:</strong> Uporabniško ime, e-pošta, geslo.</li>
+                    <li><strong>Socialna prijava:</strong> Možnost prijave prek Google ali Facebook računa.</li>
+                    <li><strong>Dodatne varnostne nastavitve:</strong> Dvofaktorska avtentikacija in varnostna vprašanja.</li>
+                </ul>
+            </div>
+            <div class="subsection">
+                <h4>Izhodi:</h4>
+                <ul>
+                    <li><strong>Uporabniški dostop:</strong> Prijavljen uporabnik dobi dostop do svojega osebnega profila.</li>
+                    <li><strong>Sinhronizacija podatkov:</strong> Naloge in nastavitve so shranjene v oblaku in dostopne na vseh napravah.</li>
+                    <li><strong>Varnostni ukrepi:</strong> Sistem spremlja sumljive prijave in opozori uporabnika.</li>
+                </ul>
+            </div>
+            <div class="subsection">
+                <h4>Primer uporabe:</h4>
+                <ul>
+                    <li class="example">Uporabnik se registrira z e-pošto, nastavi geslo in omogoči dvofaktorsko avtentikacijo. Pri naslednji prijavi sistem zahteva kodo iz SMS sporočila.</li>
+                </ul>
+            </div>
+            <div class="subsection">
+                <h4>Dodatne tehnične in varnostne podrobnosti:</h4>
+                <ul>
+                    <li>Gesla so šifrirana s tehnologijo bcrypt za dodatno varnost.</li>
+                    <li>Podpira OAuth 2.0 za socialne prijave (Google, Facebook).</li>
+                    <li>Uporabniški podatki so shranjeni v šifrirani podatkovni bazi in niso dostopni nepooblaščenim osebam.</li>
+                </ul>
+            </div>
+        </div>
+
+    <h3>UML Diagram primerov uporabe</h3>
+      <img src="/images/uml_diagram.png" alt="UML diagram primerov uporabe" class="uml-diagram">
+    </div>
+  </section>
+</body>
+</html>

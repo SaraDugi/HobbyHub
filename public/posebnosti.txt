@@ -1,0 +1,103 @@
+/posebnosti/
+
+Spodaj so opisane tehnične zahteve in posebnosti za implementacijo aplikacije HobbyHub, s poudarkom na uporabi Node.js in Express.
+
+--------------------------------------------------------------------------------
+1. Koledarski sistem
+--------------------------------------------------------------------------------
+- Tehnologije:
+  - Node.js + Express:
+    - REST API za dodajanje, urejanje in brisanje koledarskih vnosov
+    - Validacija vhodnih podatkov (npr. prek knjižnic, kot sta "express-validator" ali "date-fns")
+  - Shranjevanje podatkov:
+    - Lokalne datoteke JSON ali podatkovna baza (npr. SQLite, MongoDB) za hranjenje informacij o aktivnostih
+
+- Posebne zahteve:
+  - Za zvočna obvestila mora naprava podpirati predvajanje zvoka
+
+--------------------------------------------------------------------------------
+2. Sledenje napredka in dosežkov
+--------------------------------------------------------------------------------
+- Tehnologije:
+  - Node.js + Express:
+    - API za shranjevanje in poizvedovanje o opravljenih nalogah ter statističnih podatkih
+    - Izračune lahko izvedemo v Node.js (npr. skupno število, povprečni čas, odstotki ...)
+  - Shranjevanje podatkov:
+    - Relacijska ali NoSQL baza podatkov (npr. PostgreSQL ali MongoDB)
+  - Vizualizacija:
+    - Odjemalski del lahko podatke prejme prek API in jih prikaže (npr. z JS grafi ali SSR predlogami); lahko se uporabijo knjižnice, kot so Chart.js (v brskalniku) ali strežniška predpriprava grafov
+
+- Posebne zahteve:
+  - Za delovanje prikaza statistik v realnem času potrebujemo komunikacijo
+
+--------------------------------------------------------------------------------
+3. Gamifikacijski mehanizmi
+--------------------------------------------------------------------------------
+- Tehnologije:
+  - Node.js + Express:
+    - Storitve za dodeljevanje točk, značk in upravljanje lestvic
+  - Shranjevanje podatkov:
+    - Skupna baza za zapise o točkah in napredku, deljena med vsemi uporabniki
+  - Realnočasovna komunikacija:
+    - Če želimo takojšnje posodobitve (npr. lestvica), lahko uporabimo Socket.io
+
+- Posebne zahteve:
+  - Internetna povezava je potrebna, če želimo sinhronizirati dosežke med različnimi napravami ali prikazovati globalne lestvice
+  - Strojni senzorji niso potrebni, razen če bi v prihodnosti želeli integrirati funkcionalnosti, kot je merjenje telesne aktivnosti
+
+--------------------------------------------------------------------------------
+4. Personalizacija uporabniškega vmesnika
+--------------------------------------------------------------------------------
+- Tehnologije:
+  - Node.js + Express:
+    - Endpoints za shranjevanje in nalaganje uporabniških nastavitev
+    - Generiranje dinamike CSS (npr. preko predlog, ki upoštevajo želene barvne sheme)
+  - Shranjevanje podatkov:
+    - JSON konfiguracije ali ločena tabela v bazi za posamezne preference
+
+- Posebne zahteve:
+  - Za hitro prilagajanje videza lahko na strani odjemalca uporabimo minimalen JavaScript za menjavanje slogov
+
+--------------------------------------------------------------------------------
+5. Upravljanje nalog
+--------------------------------------------------------------------------------
+- Tehnologije:
+  - Node.js + Express:
+    - REST API za ustvarjanje, urejanje, brisanje in pridobivanje podatkov o nalogah
+    - Knjižnice za pošiljanje opomnikov (npr. "nodemailer" za e-pošto; za SMS lahko pride v poštev Twilio ali kak drug ponudnik)
+  - Shranjevanje podatkov:
+    - Šifrirana podatkovna baza (npr. s pomočjo ustreznih mehanizmov v MongoDB ali PostgreSQL) za občutljive podatke o nalogah
+
+- Posebne zahteve:
+  - Internetna povezava, če so opomniki (e-pošta, SMS) zahtevani
+  - Naprava ne potrebuje strojnih senzorjev (razen za morebitne razširitve, npr. lokacijski opomniki)
+
+--------------------------------------------------------------------------------
+6. Prijava in registracija
+--------------------------------------------------------------------------------
+- Tehnologije:
+  - Node.js + Express:
+    - Vzpostavitev avtentikacijskega mehanizma
+    - OAuth 2.0 integracije (Google, Facebook)
+    - Šifriranje gesel (npr. "bcrypt" ali "argon2")
+  - Dvofaktorska avtentikacija:
+    - Uporaba SMS storitve ali aplikacije za generiranje enkratnih gesel (TOTP), npr. knjižnica "speakeasy"
+
+- Posebne zahteve:
+  - Internetna povezava za preverjanje prijave, OAuth in sinhronizacijo
+  - Dostop do mobilnega omrežja
+  - Varnostni mehanizmi
+
+--------------------------------------------------------------------------------
+Splošne opombe
+--------------------------------------------------------------------------------
+- Sinhronizacija v oblaku:
+  - Node.js strežnik poskrbi za skladiščenje podatkov in sinhronizacijo med napravami
+- Offline način:
+  - V kolikor želimo, lahko omogočimo lokalno shranjevanje (npr. v IndexedDB ali z datotekami JSON); sinhronizacija s strežnikom se izvede, ko se uporabnik ponovno poveže
+- Varnost:
+  - Uporaba HTTPS in regularnih varnostnih pregledov (npr. "npm audit")
+  - Šifriranje občutljivih podatkov v bazi
+- Dostop do senzorjev:
+  - Za osnovno delovanje ni potreben, Node.js + Express deluje neodvisno od strojnih senzorjev
+  - Morebitne razširitve (GPS, pospeškomer, kamera) bi zahtevale dodatna dovoljenja in integracije
