@@ -1,6 +1,6 @@
 const http = require('http');
-const { port } = require('./config');
-const handleRequest = require('./routes');
+const { port } = require('./conceptual_design/config');
+const handleRequest = require('./conceptual_design/routes');
 
 const server = http.createServer((req, res) => {
   console.log(`Received request: ${req.url}`);
