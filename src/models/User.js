@@ -1,4 +1,4 @@
-const db = require('../db'); // assumes you abstracted the MySQL connection in db.js
+const db = require('../config/db'); 
 
 const User = {
   getAll: callback => {
