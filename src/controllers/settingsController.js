@@ -1,6 +1,6 @@
 const UserSettings = require('../models/Settings');
 
-const userSettingsController = {
+const settingsController = {
   getAll: (req, res) => {
     UserSettings.getAll((err, settings) => {
       if (err) return res.status(500).json({ error: err });
@@ -51,4 +51,4 @@ const userSettingsController = {
   }
 };
 
-module.exports = userSettingsController;
+module.exports = settingsController;
