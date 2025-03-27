@@ -1,24 +1,49 @@
-const db = require('../config/db'); 
+const db = require('../config/db');
 
 const User = {
-  getAll: callback => {
-    db.query('SELECT * FROM users', callback);
+  getAll: async () => {
+    try {
+      const [rows] = await db.query('SELECT * FROM users');
+      return rows;
+    } catch (error) {
+      throw error;
+    }
   },
 
-  getById: (id, callback) => {
-    db.query('SELECT * FROM users WHERE id = ?', [id], callback);
+  getById: async (id) => {
+    try {
+      const [rows] = await db.query('SELECT * FROM users WHERE id = ?', [id]);
+      return rows;
+    } catch (error) {
+      throw error;
+    }
   },
 
-  create: (data, callback) => {
-    db.query('INSERT INTO users SET ?', data, callback);
+  create: async (data) => {
+    try {
+      const [result] = await db.query('INSERT INTO users SET ?', data);
+      return result;
+    } catch (error) {
+      throw error;
+    }
   },
 
-  update: (id, data, callback) => {
-    db.query('UPDATE users SET ? WHERE id = ?', [data, id], callback);
+  update: async (id, data) => {
+    try {
+      const [result] = await db.query('UPDATE users SET ? WHERE id = ?', [data, id]);
+      return result;
+    } catch (error) {
+      throw error;
+    }
   },
 
-  remove: (id, callback) => {
-    db.query('DELETE FROM users WHERE id = ?', [id], callback);
+  remove: async (id) => {
+    try {
+      const [result] = await db.query('DELETE FROM users WHERE id = ?', [id]);
+      return result;
+    } catch (error) {
+      throw error;
+    }
   }
 };
 

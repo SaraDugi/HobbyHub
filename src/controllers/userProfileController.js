@@ -1,62 +1,76 @@
 const UserProfile = require('../models/UserProfile');
 
 const userProfileController = {
-  getAll: (req, res) => {
-    UserProfile.getAll((err, profiles) => {
-      if (err) return res.status(500).json({ error: err });
+  getAll: async (req, res) => {
+    try {
+      const profiles = await UserProfile.getAll();
       res.json(profiles);
-    });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   },
 
-  getById: (req, res) => {
-    const id = req.params.id;
-    UserProfile.getById(id, (err, profile) => {
-      if (err) return res.status(500).json({ error: err });
+  getById: async (req, res) => {
+    try {
+      const id = req.params.id;
+      const profile = await UserProfile.getById(id);
       if (!profile.length) return res.status(404).json({ message: 'Profile not found' });
       res.json(profile[0]);
-    });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   },
 
-  create: (req, res) => {
-    const data = req.body;
-    UserProfile.create(data, (err, result) => {
-      if (err) return res.status(500).json({ error: err });
+  create: async (req, res) => {
+    try {
+      const data = req.body;
+      const result = await UserProfile.create(data);
       res.status(201).json({ id: result.insertId, ...data });
-    });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   },
 
-  update: (req, res) => {
-    const id = req.params.id;
-    const data = req.body;
-    UserProfile.update(id, data, err => {
-      if (err) return res.status(500).json({ error: err });
+  update: async (req, res) => {
+    try {
+      const id = req.params.id;
+      const data = req.body;
+      await UserProfile.update(id, data);
       res.json({ message: 'Profile updated successfully' });
-    });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   },
 
-  remove: (req, res) => {
-    const id = req.params.id;
-    UserProfile.remove(id, err => {
-      if (err) return res.status(500).json({ error: err });
+  remove: async (req, res) => {
+    try {
+      const id = req.params.id;
+      await UserProfile.remove(id);
       res.json({ message: 'Profile deleted successfully' });
-    });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   },
 
-  getByUser: (req, res) => {
-    const userId = req.params.userId;
-    UserProfile.getByUser(userId, (err, profiles) => {
-      if (err) return res.status(500).json({ error: err });
+  getByUser: async (req, res) => {
+    try {
+      const userId = req.params.userId;
+      const profiles = await UserProfile.getByUser(userId);
       res.json(profiles);
-    });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   },
 
-  getDefaultProfile: (req, res) => {
-    const userId = req.params.userId;
-    UserProfile.getDefaultProfile(userId, (err, profile) => {
-      if (err) return res.status(500).json({ error: err });
+  getDefaultProfile: async (req, res) => {
+    try {
+      const userId = req.params.userId;
+      const profile = await UserProfile.getDefaultProfile(userId);
       if (!profile.length) return res.status(404).json({ message: 'Default profile not found' });
       res.json(profile[0]);
-    });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   }
 };
 

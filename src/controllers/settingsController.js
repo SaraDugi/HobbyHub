@@ -1,53 +1,65 @@
 const UserSettings = require('../models/Settings');
 
 const settingsController = {
-  getAll: (req, res) => {
-    UserSettings.getAll((err, settings) => {
-      if (err) return res.status(500).json({ error: err });
+  getAll: async (req, res) => {
+    try {
+      const settings = await UserSettings.getAll();
       res.json(settings);
-    });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   },
 
-  getById: (req, res) => {
-    const id = req.params.id;
-    UserSettings.getById(id, (err, setting) => {
-      if (err) return res.status(500).json({ error: err });
+  getById: async (req, res) => {
+    try {
+      const id = req.params.id;
+      const setting = await UserSettings.getById(id);
       if (!setting.length) return res.status(404).json({ message: 'Settings not found' });
       res.json(setting[0]);
-    });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   },
 
-  create: (req, res) => {
-    const data = req.body;
-    UserSettings.create(data, (err, result) => {
-      if (err) return res.status(500).json({ error: err });
+  create: async (req, res) => {
+    try {
+      const data = req.body;
+      const result = await UserSettings.create(data);
       res.status(201).json({ id: result.insertId, ...data });
-    });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   },
 
-  update: (req, res) => {
-    const id = req.params.id;
-    const data = req.body;
-    UserSettings.update(id, data, err => {
-      if (err) return res.status(500).json({ error: err });
+  update: async (req, res) => {
+    try {
+      const id = req.params.id;
+      const data = req.body;
+      await UserSettings.update(id, data);
       res.json({ message: 'User settings updated successfully' });
-    });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   },
 
-  remove: (req, res) => {
-    const id = req.params.id;
-    UserSettings.remove(id, err => {
-      if (err) return res.status(500).json({ error: err });
+  remove: async (req, res) => {
+    try {
+      const id = req.params.id;
+      await UserSettings.remove(id);
       res.json({ message: 'User settings deleted successfully' });
-    });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   },
 
-  getByUser: (req, res) => {
-    const userId = req.params.userId;
-    UserSettings.getByUser(userId, (err, setting) => {
-      if (err) return res.status(500).json({ error: err });
+  getByUser: async (req, res) => {
+    try {
+      const userId = req.params.userId;
+      const setting = await UserSettings.getByUser(userId);
       res.json(setting);
-    });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   }
 };
 

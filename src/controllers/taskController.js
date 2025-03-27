@@ -1,53 +1,65 @@
 const Task = require('../models/Task');
 
 const taskController = {
-  getAll: (req, res) => {
-    Task.getAll((err, tasks) => {
-      if (err) return res.status(500).json({ error: err });
+  getAll: async (req, res) => {
+    try {
+      const tasks = await Task.getAll();
       res.json(tasks);
-    });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   },
 
-  getById: (req, res) => {
-    const id = req.params.id;
-    Task.getById(id, (err, task) => {
-      if (err) return res.status(500).json({ error: err });
+  getById: async (req, res) => {
+    try {
+      const id = req.params.id;
+      const task = await Task.getById(id);
       if (!task.length) return res.status(404).json({ message: 'Task not found' });
       res.json(task[0]);
-    });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   },
 
-  create: (req, res) => {
-    const data = req.body;
-    Task.create(data, (err, result) => {
-      if (err) return res.status(500).json({ error: err });
+  create: async (req, res) => {
+    try {
+      const data = req.body;
+      const result = await Task.create(data);
       res.status(201).json({ id: result.insertId, ...data });
-    });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   },
 
-  update: (req, res) => {
-    const id = req.params.id;
-    const data = req.body;
-    Task.update(id, data, err => {
-      if (err) return res.status(500).json({ error: err });
+  update: async (req, res) => {
+    try {
+      const id = req.params.id;
+      const data = req.body;
+      await Task.update(id, data);
       res.json({ message: 'Task updated successfully' });
-    });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   },
 
-  remove: (req, res) => {
-    const id = req.params.id;
-    Task.remove(id, err => {
-      if (err) return res.status(500).json({ error: err });
+  remove: async (req, res) => {
+    try {
+      const id = req.params.id;
+      await Task.remove(id);
       res.json({ message: 'Task deleted successfully' });
-    });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   },
 
-  getByUser: (req, res) => {
-    const userId = req.params.userId;
-    Task.getByUser(userId, (err, tasks) => {
-      if (err) return res.status(500).json({ error: err });
+  getByUser: async (req, res) => {
+    try {
+      const userId = req.params.userId;
+      const tasks = await Task.getByUser(userId);
       res.json(tasks);
-    });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   }
 };
 

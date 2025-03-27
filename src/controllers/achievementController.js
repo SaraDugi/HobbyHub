@@ -1,53 +1,67 @@
 const Achievement = require('../models/Achievements');
 
 const achievementController = {
-  getAll: (req, res) => {
-    Achievement.getAll((err, achievements) => {
-      if (err) return res.status(500).json({ error: err });
+  getAll: async (req, res) => {
+    try {
+      const achievements = await Achievement.getAll();
       res.json(achievements);
-    });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   },
 
-  getById: (req, res) => {
-    const id = req.params.id;
-    Achievement.getById(id, (err, achievement) => {
-      if (err) return res.status(500).json({ error: err });
-      if (!achievement.length) return res.status(404).json({ message: 'Achievement not found' });
+  getById: async (req, res) => {
+    try {
+      const id = req.params.id;
+      const achievement = await Achievement.getById(id);
+      if (!achievement.length) {
+        return res.status(404).json({ message: 'Achievement not found' });
+      }
       res.json(achievement[0]);
-    });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   },
 
-  create: (req, res) => {
-    const data = req.body;
-    Achievement.create(data, (err, result) => {
-      if (err) return res.status(500).json({ error: err });
+  create: async (req, res) => {
+    try {
+      const data = req.body;
+      const result = await Achievement.create(data);
       res.status(201).json({ id: result.insertId, ...data });
-    });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   },
 
-  update: (req, res) => {
-    const id = req.params.id;
-    const data = req.body;
-    Achievement.update(id, data, err => {
-      if (err) return res.status(500).json({ error: err });
+  update: async (req, res) => {
+    try {
+      const id = req.params.id;
+      const data = req.body;
+      await Achievement.update(id, data);
       res.json({ message: 'Achievement updated successfully' });
-    });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   },
 
-  remove: (req, res) => {
-    const id = req.params.id;
-    Achievement.remove(id, err => {
-      if (err) return res.status(500).json({ error: err });
+  remove: async (req, res) => {
+    try {
+      const id = req.params.id;
+      await Achievement.remove(id);
       res.json({ message: 'Achievement deleted successfully' });
-    });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   },
 
-  getByUser: (req, res) => {
-    const userId = req.params.userId;
-    Achievement.getByUser(userId, (err, achievements) => {
-      if (err) return res.status(500).json({ error: err });
+  getByUser: async (req, res) => {
+    try {
+      const userId = req.params.userId;
+      const achievements = await Achievement.getByUser(userId);
       res.json(achievements);
-    });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   }
 };
 

@@ -1,28 +1,58 @@
-const db = require('../config/db'); 
+const db = require('../config/db');
 
 const Achievement = {
-  getAll: callback => {
-    db.query('SELECT * FROM achievements', callback);
+  getAll: async () => {
+    try {
+      const [rows] = await db.query('SELECT * FROM achievements');
+      return rows;
+    } catch (error) {
+      throw error;
+    }
   },
 
-  getById: (id, callback) => {
-    db.query('SELECT * FROM achievements WHERE id = ?', [id], callback);
+  getById: async (id) => {
+    try {
+      const [rows] = await db.query('SELECT * FROM achievements WHERE id = ?', [id]);
+      return rows;
+    } catch (error) {
+      throw error;
+    }
   },
 
-  create: (data, callback) => {
-    db.query('INSERT INTO achievements SET ?', data, callback);
+  create: async (data) => {
+    try {
+      const [result] = await db.query('INSERT INTO achievements SET ?', data);
+      return result;
+    } catch (error) {
+      throw error;
+    }
   },
 
-  update: (id, data, callback) => {
-    db.query('UPDATE achievements SET ? WHERE id = ?', [data, id], callback);
+  update: async (id, data) => {
+    try {
+      const [result] = await db.query('UPDATE achievements SET ? WHERE id = ?', [data, id]);
+      return result;
+    } catch (error) {
+      throw error;
+    }
   },
 
-  remove: (id, callback) => {
-    db.query('DELETE FROM achievements WHERE id = ?', [id], callback);
+  remove: async (id) => {
+    try {
+      const [result] = await db.query('DELETE FROM achievements WHERE id = ?', [id]);
+      return result;
+    } catch (error) {
+      throw error;
+    }
   },
 
-  getByUser: (userId, callback) => {
-    db.query('SELECT * FROM achievements WHERE user_id = ?', [userId], callback);
+  getByUser: async (userId) => {
+    try {
+      const [rows] = await db.query('SELECT * FROM achievements WHERE user_id = ?', [userId]);
+      return rows;
+    } catch (error) {
+      throw error;
+    }
   }
 };
 

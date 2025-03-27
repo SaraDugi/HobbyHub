@@ -1,61 +1,75 @@
 const ProgressLog = require('../models/Progress');
 
 const progressController = {
-  getAll: (req, res) => {
-    ProgressLog.getAll((err, logs) => {
-      if (err) return res.status(500).json({ error: err });
+  getAll: async (req, res) => {
+    try {
+      const logs = await ProgressLog.getAll();
       res.json(logs);
-    });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   },
 
-  getById: (req, res) => {
-    const id = req.params.id;
-    ProgressLog.getById(id, (err, log) => {
-      if (err) return res.status(500).json({ error: err });
+  getById: async (req, res) => {
+    try {
+      const id = req.params.id;
+      const log = await ProgressLog.getById(id);
       if (!log.length) return res.status(404).json({ message: 'Log not found' });
       res.json(log[0]);
-    });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   },
 
-  create: (req, res) => {
-    const data = req.body;
-    ProgressLog.create(data, (err, result) => {
-      if (err) return res.status(500).json({ error: err });
+  create: async (req, res) => {
+    try {
+      const data = req.body;
+      const result = await ProgressLog.create(data);
       res.status(201).json({ id: result.insertId, ...data });
-    });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   },
 
-  update: (req, res) => {
-    const id = req.params.id;
-    const data = req.body;
-    ProgressLog.update(id, data, err => {
-      if (err) return res.status(500).json({ error: err });
+  update: async (req, res) => {
+    try {
+      const id = req.params.id;
+      const data = req.body;
+      await ProgressLog.update(id, data);
       res.json({ message: 'Log updated successfully' });
-    });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   },
 
-  remove: (req, res) => {
-    const id = req.params.id;
-    ProgressLog.remove(id, err => {
-      if (err) return res.status(500).json({ error: err });
+  remove: async (req, res) => {
+    try {
+      const id = req.params.id;
+      await ProgressLog.remove(id);
       res.json({ message: 'Log deleted successfully' });
-    });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   },
 
-  getByUser: (req, res) => {
-    const userId = req.params.userId;
-    ProgressLog.getByUser(userId, (err, logs) => {
-      if (err) return res.status(500).json({ error: err });
+  getByUser: async (req, res) => {
+    try {
+      const userId = req.params.userId;
+      const logs = await ProgressLog.getByUser(userId);
       res.json(logs);
-    });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   },
 
-  getByTask: (req, res) => {
-    const taskId = req.params.taskId;
-    ProgressLog.getByTask(taskId, (err, logs) => {
-      if (err) return res.status(500).json({ error: err });
+  getByTask: async (req, res) => {
+    try {
+      const taskId = req.params.taskId;
+      const logs = await ProgressLog.getByTask(taskId);
       res.json(logs);
-    });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   }
 };
 

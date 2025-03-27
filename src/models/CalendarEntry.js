@@ -1,36 +1,70 @@
-const db = require('../config/db'); 
+const db = require('../config/db');
 
 const CalendarEntry = {
-  getAll: callback => {
-    db.query('SELECT * FROM calendar_entries', callback);
+  getAll: async () => {
+    try {
+      const [rows] = await db.query('SELECT * FROM calendar_entries');
+      return rows;
+    } catch (error) {
+      throw error;
+    }
   },
 
-  getById: (id, callback) => {
-    db.query('SELECT * FROM calendar_entries WHERE id = ?', [id], callback);
+  getById: async (id) => {
+    try {
+      const [rows] = await db.query('SELECT * FROM calendar_entries WHERE id = ?', [id]);
+      return rows;
+    } catch (error) {
+      throw error;
+    }
   },
 
-  create: (data, callback) => {
-    db.query('INSERT INTO calendar_entries SET ?', data, callback);
+  create: async (data) => {
+    try {
+      const [result] = await db.query('INSERT INTO calendar_entries SET ?', data);
+      return result;
+    } catch (error) {
+      throw error;
+    }
   },
 
-  update: (id, data, callback) => {
-    db.query('UPDATE calendar_entries SET ? WHERE id = ?', [data, id], callback);
+  update: async (id, data) => {
+    try {
+      const [result] = await db.query('UPDATE calendar_entries SET ? WHERE id = ?', [data, id]);
+      return result;
+    } catch (error) {
+      throw error;
+    }
   },
 
-  remove: (id, callback) => {
-    db.query('DELETE FROM calendar_entries WHERE id = ?', [id], callback);
+  remove: async (id) => {
+    try {
+      const [result] = await db.query('DELETE FROM calendar_entries WHERE id = ?', [id]);
+      return result;
+    } catch (error) {
+      throw error;
+    }
   },
 
-  getByUser: (userId, callback) => {
-    db.query('SELECT * FROM calendar_entries WHERE user_id = ?', [userId], callback);
+  getByUser: async (userId) => {
+    try {
+      const [rows] = await db.query('SELECT * FROM calendar_entries WHERE user_id = ?', [userId]);
+      return rows;
+    } catch (error) {
+      throw error;
+    }
   },
 
-  getByDateRange: (userId, startDate, endDate, callback) => {
-    db.query(
-      'SELECT * FROM calendar_entries WHERE user_id = ? AND start_time >= ? AND end_time <= ?',
-      [userId, startDate, endDate],
-      callback
-    );
+  getByDateRange: async (userId, startDate, endDate) => {
+    try {
+      const [rows] = await db.query(
+        'SELECT * FROM calendar_entries WHERE user_id = ? AND start_time >= ? AND end_time <= ?',
+        [userId, startDate, endDate]
+      );
+      return rows;
+    } catch (error) {
+      throw error;
+    }
   }
 };
 

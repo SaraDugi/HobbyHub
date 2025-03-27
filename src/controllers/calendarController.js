@@ -1,65 +1,78 @@
 const CalendarEntry = require('../models/CalendarEntry');
 
 const calendarController = {
-  getAll: (req, res) => {
-    CalendarEntry.getAll((err, entries) => {
-      if (err) return res.status(500).json({ error: err });
+  getAll: async (req, res) => {
+    try {
+      const entries = await CalendarEntry.getAll();
       res.json(entries);
-    });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   },
 
-  getById: (req, res) => {
-    const id = req.params.id;
-    CalendarEntry.getById(id, (err, entry) => {
-      if (err) return res.status(500).json({ error: err });
+  getById: async (req, res) => {
+    try {
+      const id = req.params.id;
+      const entry = await CalendarEntry.getById(id);
       if (!entry.length) return res.status(404).json({ message: 'Entry not found' });
       res.json(entry[0]);
-    });
-  },
-
-  create: (req, res) => {
-    const data = req.body;
-    CalendarEntry.create(data, (err, result) => {
-      if (err) return res.status(500).json({ error: err });
-      res.status(201).json({ id: result.insertId, ...data });
-    });
-  },
-
-  update: (req, res) => {
-    const id = req.params.id;
-    const data = req.body;
-    CalendarEntry.update(id, data, err => {
-      if (err) return res.status(500).json({ error: err });
-      res.json({ message: 'Entry updated successfully' });
-    });
-  },
-
-  remove: (req, res) => {
-    const id = req.params.id;
-    CalendarEntry.remove(id, err => {
-      if (err) return res.status(500).json({ error: err });
-      res.json({ message: 'Entry deleted successfully' });
-    });
-  },
-
-  getByUser: (req, res) => {
-    const userId = req.params.userId;
-    CalendarEntry.getByUser(userId, (err, entries) => {
-      if (err) return res.status(500).json({ error: err });
-      res.json(entries);
-    });
-  },
-
-  getByDateRange: (req, res) => {
-    const { userId, startDate, endDate } = req.query;
-    if (!userId || !startDate || !endDate) {
-      return res.status(400).json({ error: 'Missing required query parameters' });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
     }
+  },
 
-    CalendarEntry.getByDateRange(userId, startDate, endDate, (err, entries) => {
-      if (err) return res.status(500).json({ error: err });
+  create: async (req, res) => {
+    try {
+      const data = req.body;
+      const result = await CalendarEntry.create(data);
+      res.status(201).json({ id: result.insertId, ...data });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  update: async (req, res) => {
+    try {
+      const id = req.params.id;
+      const data = req.body;
+      await CalendarEntry.update(id, data);
+      res.json({ message: 'Entry updated successfully' });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  remove: async (req, res) => {
+    try {
+      const id = req.params.id;
+      await CalendarEntry.remove(id);
+      res.json({ message: 'Entry deleted successfully' });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  getByUser: async (req, res) => {
+    try {
+      const userId = req.params.userId;
+      const entries = await CalendarEntry.getByUser(userId);
       res.json(entries);
-    });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  getByDateRange: async (req, res) => {
+    try {
+      const { userId, startDate, endDate } = req.query;
+      if (!userId || !startDate || !endDate) {
+        return res.status(400).json({ error: 'Missing required query parameters' });
+      }
+      const entries = await CalendarEntry.getByDateRange(userId, startDate, endDate);
+      res.json(entries);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   }
 };
 
