@@ -1,22 +1,38 @@
 const express = require('express');
-const app = express();
 require('dotenv').config();
+const { auth } = require('express-oauth2-jwt-bearer');
+
+const app = express();
 const port = process.env.PORT || 3000;
+
+const checkJwt = auth({
+  audience: process.env.OAUTH_AUDIENCE,
+  issuerBaseURL: process.env.OAUTH_ISSUER,
+  tokenSigningAlg: 'RS256',
+});
 
 app.use(express.json());
 
+const authRoutes = require('./src/routes/authRoutes');
+app.use('/api', authRoutes);
+
 const routes = [
-  { path: '/api/users', file: './src/routes/userRoutes' },
-  { path: '/api/tasks', file: './src/routes/taskRoutes' },
-  { path: '/api/progress_logs', file: './src/routes/progressRoutes' },
-  { path: '/api/achievements', file: './src/routes/achievementsRoutes' },
-  { path: '/api/calendar_entries', file: './src/routes/calendarRoutes' },
-  { path: '/api/user_settings', file: './src/routes/settingsRoutes' },
-  { path: '/api/user_profiles', file: './src/routes/userProfileRoutes' },
+  { path: '/api/users', file: './src/routes/userRoutes', protected: true },
+  { path: '/api/tasks', file: './src/routes/taskRoutes', protected: true },
+  { path: '/api/progress_logs', file: './src/routes/progressRoutes', protected: true },
+  { path: '/api/achievements', file: './src/routes/achievementsRoutes', protected: true },
+  { path: '/api/calendar_entries', file: './src/routes/calendarRoutes', protected: true },
+  { path: '/api/user_settings', file: './src/routes/settingsRoutes', protected: true },
+  { path: '/api/user_profiles', file: './src/routes/userProfileRoutes', protected: true },
 ];
 
-routes.forEach(({ path, file }) => {
-  app.use(path, require(file));
+routes.forEach(({ path, file, protected: isProtected }) => {
+  const routeHandler = require(file);
+  if (isProtected) {
+    app.use(path, checkJwt, routeHandler);
+  } else {
+    app.use(path, routeHandler);
+  }
 });
 
 app.get('/', (req, res) => {
@@ -26,7 +42,8 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
   console.log(`Strežnik teče na http://localhost:${port}`);
   console.log('\nAvailable API routes:');
-  routes.forEach(({ path }) => {
-    console.log(`   ➤ ${path}`);
+  console.log('   ➤ /api/login (public)');
+  routes.forEach(({ path, protected: isProtected }) => {
+    console.log(`   ➤ ${path} ${isProtected ? '(protected)' : '(public)'}`);
   });
 });
