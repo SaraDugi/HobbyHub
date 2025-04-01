@@ -1,15 +1,10 @@
 const express = require('express');
 require('dotenv').config();
-const { auth } = require('express-oauth2-jwt-bearer');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-const checkJwt = auth({
-  audience: process.env.OAUTH_AUDIENCE,
-  issuerBaseURL: process.env.OAUTH_ISSUER,
-  tokenSigningAlg: 'RS256',
-});
+const checkJwt = require('./src/middleware/auth');
 
 app.use(express.json());
 
@@ -36,13 +31,14 @@ routes.forEach(({ path, file, protected: isProtected }) => {
 });
 
 app.get('/', (req, res) => {
-  res.send('🎉 HobbyHub REST API is running');
+  res.send('HobbyHub REST API is running');
 });
 
 app.listen(port, () => {
   console.log(`Strežnik teče na http://localhost:${port}`);
   console.log('\nAvailable API routes:');
   console.log('   ➤ /api/login (public)');
+  console.log('   ➤ /api/refresh (public)');
   routes.forEach(({ path, protected: isProtected }) => {
     console.log(`   ➤ ${path} ${isProtected ? '(protected)' : '(public)'}`);
   });

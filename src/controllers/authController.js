@@ -1,32 +1,69 @@
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
 
+let refreshTokens = [];
+
+const generateTokens = (user) => {
+  const accessToken = jwt.sign(user, process.env.JWT_SECRET, {
+    expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN || '15m'
+  });
+
+  const refreshToken = jwt.sign(user, process.env.JWT_REFRESH_SECRET, {
+    expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || '7d'
+  });
+
+  refreshTokens.push(refreshToken);
+
+  return { accessToken, refreshToken };
+};
+
 const login = async (req, res) => {
   const { username, password } = req.body;
 
   try {
-    const [users] = await db.query('SELECT * FROM users WHERE username = ?', [username]);
-
-    if (users.length === 0) {
-      return res.status(401).json({ error: 'Invalid username or password' });
-    }
-
-    const user = users[0];
-
-    if (user.password !== password) {
-      return res.status(401).json({ error: 'Invalid username or password' });
-    }
-
-    const token = jwt.sign(
-      { id: user.id, username: user.username },
-      process.env.JWT_SECRET,
-      { expiresIn: '1h' }
+    const [rows] = await db.execute(
+      'SELECT * FROM users WHERE username = ?',
+      [username]
     );
 
-    res.json({ token });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    if (rows.length === 0) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const user = rows[0];
+
+    if (password !== user.password_hash) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const payload = { id: user.id, username: user.username };
+    const tokens = generateTokens(payload);
+    res.json(tokens);
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 };
 
-module.exports = { login };
+const refresh = (req, res) => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken || !refreshTokens.includes(refreshToken)) {
+    return res.status(403).json({ error: 'Refresh token invalid' });
+  }
+
+  try {
+    const user = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+    const tokens = generateTokens({ id: user.id, username: user.username });
+
+    refreshTokens = refreshTokens.filter((token) => token !== refreshToken);
+    refreshTokens.push(tokens.refreshToken);
+
+    res.json(tokens);
+  } catch (err) {
+    console.error('Refresh error:', err);
+    res.status(403).json({ error: 'Invalid refresh token' });
+  }
+};
+
+module.exports = { login, refresh };
