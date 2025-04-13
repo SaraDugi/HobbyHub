@@ -16,7 +16,6 @@
     </div>
   </header>
 
-  <!-- API Data Viewer -->
   <h2>View API Data</h2>
   <div id="data-controls">
     <select id="entity-selector">
@@ -38,35 +37,77 @@
     <button id="load-entity">Load Data</button>
   </div>
 
+  <!-- Search controls: input and buttons on the same line -->
+  <div id="search-controls" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
+    <input type="text" id="search-id" placeholder="Search by ID" style="width: 300px;" />
+    <button id="search-by-id">Search</button>
+    <button id="add-entry">Add Entry</button>
+  </div>
+
   <div id="api-data"></div>
 
-  <!-- App Logic -->
+  <div id="edit-modal" class="modal hidden">
+    <div class="modal-content">
+      <h3 id="modal-title">Edit Item</h3>
+      <form id="edit-form"></form>
+      <div class="modal-actions">
+        <button type="submit" form="edit-form">Save</button>
+        <button type="button" id="cancel-edit">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const token = localStorage.getItem('accessToken');
     if (!token) window.location.href = '/login.html';
 
     const apiData = document.getElementById('api-data');
     const viewModeSelect = document.getElementById('view-mode');
+    const deletableEntities = [
+      'tasks', 'achievements', 'calendar_entries',
+      'progress_logs', 'user_settings', 'user_profiles', 'users'
+    ];
+    const editableEntities = [...deletableEntities];
 
+    // Load data for the selected entity
     document.getElementById('load-entity').addEventListener('click', async () => {
       const entity = document.getElementById('entity-selector').value;
-      const res = await fetch(`/api/${entity}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      if (res.status === 401) {
-        return (window.location.href = '/login.html');
+      try {
+        const res = await fetch(`/api/${entity}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.status === 401) {
+          window.location.href = '/login.html';
+          return;
+        }
+        const data = await res.json();
+        renderData(data, entity);
+      } catch (error) {
+        console.error('Error loading data:', error);
+        alert('An error occurred while loading data.');
       }
-
-      const data = await res.json();
-      renderData(data);
     });
 
     viewModeSelect.addEventListener('change', () => {
       document.getElementById('load-entity').click();
     });
 
-    function renderData(data) {
+    function formatDate(value) {
+      const date = new Date(value);
+      return !isNaN(date)
+        ? date.toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+          })
+        : value;
+    }
+
+    function renderData(data, entity) {
       const mode = viewModeSelect.value;
       apiData.innerHTML = '';
 
@@ -80,25 +121,39 @@
         pre.textContent = JSON.stringify(data, null, 2);
         pre.classList.add('data-list');
         apiData.appendChild(pre);
-      }
-
-      else if (mode === 'card') {
+      } else if (mode === 'card') {
         data.forEach(item => {
           const div = document.createElement('div');
           div.classList.add('data-card');
           for (const [key, value] of Object.entries(item)) {
             const p = document.createElement('p');
-            const formattedValue = key === 'date_awarded'
-              ? new Date(value).toLocaleString()
-              : value;
+            const isDateField = ['date', 'timestamp', 'created_at', 'updated_at'].some(sub =>
+              key.toLowerCase().includes(sub)
+            );
+            const formattedValue = isDateField ? formatDate(value) : value;
             p.innerHTML = `<strong>${key}:</strong> ${formattedValue}`;
             div.appendChild(p);
           }
+
+          if (editableEntities.includes(entity)) {
+            const editBtn = document.createElement('button');
+            editBtn.textContent = 'Edit';
+            editBtn.classList.add('edit-btn');
+            editBtn.onclick = () => showEditModal(entity, item);
+            div.appendChild(editBtn);
+          }
+
+          if (deletableEntities.includes(entity)) {
+            const delBtn = document.createElement('button');
+            delBtn.textContent = 'Delete';
+            delBtn.classList.add('delete-btn');
+            delBtn.onclick = () => deleteItem(entity, item.id);
+            div.appendChild(delBtn);
+          }
+
           apiData.appendChild(div);
         });
-      }
-
-      else if (mode === 'table') {
+      } else if (mode === 'table') {
         const table = document.createElement('table');
         const thead = table.createTHead();
         const headerRow = thead.insertRow();
@@ -110,15 +165,37 @@
           headerRow.appendChild(th);
         });
 
+        if (editableEntities.includes(entity)) {
+          const th = document.createElement('th');
+          th.textContent = 'Actions';
+          headerRow.appendChild(th);
+        }
+
         const tbody = table.createTBody();
         data.forEach(item => {
           const row = tbody.insertRow();
           keys.forEach(key => {
             const td = row.insertCell();
-            td.textContent = key === 'date_awarded'
-              ? new Date(item[key]).toLocaleString()
-              : item[key];
+            const isDateField = ['date', 'timestamp', 'created_at', 'updated_at'].some(sub =>
+              key.toLowerCase().includes(sub)
+            );
+            td.textContent = isDateField ? formatDate(item[key]) : item[key];
           });
+
+          if (editableEntities.includes(entity)) {
+            const td = row.insertCell();
+            const editBtn = document.createElement('button');
+            editBtn.textContent = 'Edit';
+            editBtn.classList.add('edit-btn');
+            editBtn.onclick = () => showEditModal(entity, item);
+            td.appendChild(editBtn);
+
+            const delBtn = document.createElement('button');
+            delBtn.textContent = 'Delete';
+            delBtn.classList.add('delete-btn');
+            delBtn.onclick = () => deleteItem(entity, item.id);
+            td.appendChild(delBtn);
+          }
         });
 
         const wrapper = document.createElement('div');
@@ -127,6 +204,193 @@
         apiData.appendChild(wrapper);
       }
     }
+
+    async function deleteItem(entity, id) {
+      if (!confirm('Are you sure you want to delete this item?')) return;
+
+      try {
+        const res = await fetch(`/api/${entity}/${id}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          alert('Item deleted successfully.');
+          document.getElementById('load-entity').click();
+        } else {
+          alert('Failed to delete item.');
+        }
+      } catch (error) {
+        console.error('Delete error:', error);
+        alert('An error occurred while deleting.');
+      }
+    }
+
+    function showEditModal(entity, item) {
+      const modal = document.getElementById('edit-modal');
+      const form = document.getElementById('edit-form');
+      document.getElementById('modal-title').textContent = 'Edit Item';
+      form.innerHTML = '';
+      modal.classList.remove('hidden');
+
+      for (const [key, value] of Object.entries(item)) {
+        if (key === 'id') continue;
+        const input = document.createElement('input');
+        input.name = key;
+        input.placeholder = key;
+        input.required = true;
+        if (typeof value === 'number') {
+          input.type = 'number';
+          input.value = value;
+        } else if (key.toLowerCase().includes('date') || key.toLowerCase().includes('timestamp')) {
+          input.type = 'datetime-local';
+          const date = new Date(value);
+          if (!isNaN(date)) {
+            const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+            input.value = local.toISOString().slice(0, 16);
+          }
+        } else {
+          input.type = 'text';
+          input.value = value !== null ? value : '';
+        }
+        form.appendChild(input);
+      }
+
+      form.onsubmit = async (e) => {
+        e.preventDefault();
+        const formData = new FormData(form);
+        const data = {};
+        for (const [key, value] of formData.entries()) {
+          if (value === '') continue;
+          if (key.toLowerCase().includes('date') || key.toLowerCase().includes('timestamp')) {
+            const date = new Date(value);
+            if (!isNaN(date)) {
+              data[key] = date.toISOString().slice(0, 19).replace('T', ' ');
+            }
+          } else {
+            data[key] = value;
+          }
+        }
+        try {
+          const res = await fetch(`/api/${entity}/${item.id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify(data)
+          });
+          if (res.ok) {
+            alert('Item updated successfully!');
+            modal.classList.add('hidden');
+            document.getElementById('load-entity').click();
+          } else {
+            const error = await res.json();
+            alert(`Update failed: ${error.message || res.status}`);
+          }
+        } catch (err) {
+          alert('Error while updating.');
+          console.error(err);
+        }
+      };
+    }
+
+    // New function for showing the Add Entry modal
+    function showAddModal(entity, template) {
+      const modal = document.getElementById('edit-modal');
+      const form = document.getElementById('edit-form');
+      document.getElementById('modal-title').textContent = 'Add New Item';
+      form.innerHTML = '';
+      modal.classList.remove('hidden');
+
+      // If a template is available (using keys from an existing entry), use it to generate empty inputs.
+      if (template && Object.keys(template).length > 0) {
+        for (const key of Object.keys(template)) {
+          if (key === 'id') continue;
+          const input = document.createElement('input');
+          input.name = key;
+          input.placeholder = key;
+          input.required = true;
+          if (typeof template[key] === 'number') {
+            input.type = 'number';
+          } else if (key.toLowerCase().includes('date') || key.toLowerCase().includes('timestamp')) {
+            input.type = 'datetime-local';
+          } else {
+            input.type = 'text';
+          }
+          input.value = ''; // leave value empty for creation
+          form.appendChild(input);
+        }
+      } else {
+        // If no template is available, provide a textarea for raw JSON input.
+        const textarea = document.createElement('textarea');
+        textarea.name = 'json';
+        textarea.placeholder = 'Enter JSON data for new entry';
+        textarea.required = true;
+        textarea.style.width = '100%';
+        textarea.style.height = '200px';
+        form.appendChild(textarea);
+      }
+
+      form.onsubmit = async (e) => {
+        e.preventDefault();
+        let data;
+        if (template && Object.keys(template).length > 0) {
+          const formData = new FormData(form);
+          data = {};
+          for (const [key, value] of formData.entries()) {
+            if (value === '') continue;
+            if (key.toLowerCase().includes('date') || key.toLowerCase().includes('timestamp')) {
+              const date = new Date(value);
+              if (!isNaN(date)) {
+                data[key] = date.toISOString().slice(0, 19).replace('T', ' ');
+              }
+            } else {
+              // Convert to number if the template value is a number.
+              if (template[key] !== undefined && typeof template[key] === 'number') {
+                data[key] = Number(value);
+              } else {
+                data[key] = value;
+              }
+            }
+          }
+        } else {
+          // If using the raw JSON textarea.
+          const jsonVal = form.elements['json'].value;
+          try {
+            data = JSON.parse(jsonVal);
+          } catch (err) {
+            alert('Invalid JSON input.');
+            return;
+          }
+        }
+        try {
+          const res = await fetch(`/api/${entity}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify(data)
+          });
+          if (res.ok) {
+            alert('New item created successfully!');
+            modal.classList.add('hidden');
+            document.getElementById('load-entity').click();
+          } else {
+            const error = await res.json();
+            alert(`Creation failed: ${error.message || res.status}`);
+          }
+        } catch (err) {
+          alert('Error while creating new entry.');
+          console.error(err);
+        }
+      };
+    }
+
+    // Cancel button closes the modal.
+    document.getElementById('cancel-edit').addEventListener('click', () => {
+      document.getElementById('edit-modal').classList.add('hidden');
+    });
 
     document.getElementById('mode-toggle').addEventListener('click', () => {
       document.body.classList.toggle('dark-mode');
@@ -150,7 +414,6 @@
             'BGtv18Gw9xNHYtH_R36gfbPG-jIKT2pHAUsTGKvg8sRBO6BfGqBjo30OBss26Lv4DtJBcmUXbCglwpf8gg55a_k'
           )
         });
-
         await fetch('/subscribe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -165,6 +428,56 @@
         return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
       }
     }
+
+    // Search by ID event listener
+    document.getElementById('search-by-id').addEventListener('click', async () => {
+      const entity = document.getElementById('entity-selector').value;
+      const searchId = document.getElementById('search-id').value.trim();
+      if (!searchId) {
+        alert("Please enter an ID to search.");
+        return;
+      }
+      try {
+        const res = await fetch(`/api/${entity}/${searchId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.status === 401) {
+          window.location.href = '/login.html';
+          return;
+        }
+        if (res.status === 404) {
+          alert('Item not found.');
+          return;
+        }
+        const data = await res.json();
+        // Wrap single item in an array if necessary
+        const resultData = Array.isArray(data) ? data : [data];
+        renderData(resultData, entity);
+      } catch (error) {
+        console.error('Search error:', error);
+        alert('An error occurred while searching.');
+      }
+    });
+
+    // Add Entry event listener: fetch a template (if available) and open the modal for creation.
+    document.getElementById('add-entry').addEventListener('click', async () => {
+      const entity = document.getElementById('entity-selector').value;
+      let template = {};
+      try {
+        const res = await fetch(`/api/${entity}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            template = data[0];
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      }
+      showAddModal(entity, template);
+    });
   </script>
 
   <script src="/src/app.js"></script>
