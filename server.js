@@ -1,14 +1,18 @@
 const express = require('express');
+const path = require('path');
 require('dotenv').config();
+const webPush = require('web-push');
+const cors = require('cors');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-const checkJwt = require('./src/middleware/auth');
-
+app.use(cors());
 app.use(express.json());
 
+const checkJwt = require('./src/middleware/auth');
 const authRoutes = require('./src/routes/authRoutes');
+
 app.use('/api', authRoutes);
 
 const routes = [
@@ -18,7 +22,7 @@ const routes = [
   { path: '/api/achievements', file: './src/routes/achievementsRoutes', protected: true },
   { path: '/api/calendar_entries', file: './src/routes/calendarRoutes', protected: true },
   { path: '/api/user_settings', file: './src/routes/settingsRoutes', protected: true },
-  { path: '/api/user_profiles', file: './src/routes/userProfileRoutes', protected: true },
+  { path: '/api/user_profiles', file: './src/routes/userProfileRoutes', protected: true }
 ];
 
 routes.forEach(({ path, file, protected: isProtected }) => {
@@ -30,16 +34,52 @@ routes.forEach(({ path, file, protected: isProtected }) => {
   }
 });
 
-app.get('/', (req, res) => {
-  res.send('HobbyHub REST API is running');
+const subscriptions = [];
+
+webPush.setVapidDetails(
+  'mailto:admin@hobbyhub.com',
+  process.env.VAPID_PUBLIC_KEY,
+  process.env.VAPID_PRIVATE_KEY
+);
+
+app.post('/subscribe', (req, res) => {
+  const subscription = req.body;
+  subscriptions.push(subscription);
+  res.status(201).json({ message: 'Subscription stored.' });
+});
+
+app.post('/notify', (req, res) => {
+  const { title, body } = req.body;
+  const payload = JSON.stringify({ title, body });
+
+  const results = subscriptions.map(sub =>
+    webPush.sendNotification(sub, payload).catch(err => {
+      console.error('Push error:', err);
+    })
+  );
+
+  Promise.all(results)
+    .then(() => res.status(200).json({ message: 'Notifications sent.' }))
+    .catch(err => res.status(500).json({ error: err.message }));
+});
+
+app.get('/login.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client', 'public', 'login.html'));
+});
+
+app.use(express.static(path.join(__dirname, 'client', 'public')));
+
+app.use((err, req, res, next) => {
+  console.error('Global error:', err);
+  res.status(500).json({ error: 'Internal Server Error' });
 });
 
 app.listen(port, () => {
-  console.log(`Strežnik teče na http://localhost:${port}`);
-  console.log('\nAvailable API routes:');
-  console.log('   ➤ /api/login (public)');
-  console.log('   ➤ /api/refresh (public)');
-  routes.forEach(({ path, protected: isProtected }) => {
-    console.log(`   ➤ ${path} ${isProtected ? '(protected)' : '(public)'}`);
-  });
+  console.log(`\n🚀 Strežnik teče na: http://localhost:${port}`);
+  console.log('📁 Statika: /client/public');
+  console.log('🔐 Zaščiteni API-ji:');
+  routes.forEach(({ path }) => console.log(`   ➤ ${path}`));
+  console.log('🔔 Potisna obvestila:');
+  console.log('   ➤ POST /subscribe');
+  console.log('   ➤ POST /notify\n');
 });

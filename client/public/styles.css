@@ -1,0 +1,228 @@
+:root {
+  --bg-light: #f4f7fa;
+  --bg-dark: #1a202c;
+  --text-light: #1a202c;
+  --text-dark: #e2e8f0;
+  --accent: #3182ce;
+  --accent-hover: #2b6cb0;
+  --card-bg-light: rgba(255, 255, 255, 0.6);
+  --card-bg-dark: rgba(255, 255, 255, 0.1);
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: var(--bg-light);
+  color: var(--text-light);
+  transition: background 0.3s, color 0.3s;
+  padding: 20px;
+}
+
+body.dark-mode {
+  background: var(--bg-dark);
+  color: var(--text-dark);
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--card-bg-light);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  padding: 16px 24px;
+  margin-bottom: 20px;
+  transition: background 0.3s;
+}
+body.dark-mode header {
+  background: var(--card-bg-dark);
+}
+
+button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  background: var(--accent);
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+button:hover {
+  background: var(--accent-hover);
+}
+
+input[type="text"], select {
+  width: 100%;
+  max-width: 600px;
+  padding: 12px 16px;
+  margin: 12px auto;
+  display: block;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  transition: border 0.3s;
+}
+input:focus {
+  border-color: var(--accent);
+}
+
+#task-list {
+  max-width: 600px;
+  margin: 20px auto;
+}
+#task-list li {
+  background: var(--card-bg-light);
+  backdrop-filter: blur(8px);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 10px;
+  box-shadow: var(--shadow);
+  transition: background 0.3s;
+}
+body.dark-mode #task-list li {
+  background: var(--card-bg-dark);
+}
+
+img {
+  display: block;
+  margin: 24px auto;
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+}
+
+#data-view-modes {
+  text-align: center;
+  margin: 16px 0;
+}
+.data-card, .data-table, .data-list {
+  background: var(--card-bg-light);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  padding: 12px;
+  margin: 10px auto;
+  max-width: 800px;
+  transition: background 0.3s;
+}
+body.dark-mode .data-card,
+body.dark-mode .data-list,
+body.dark-mode .data-table {
+  background: var(--card-bg-dark);
+}
+
+.data-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-left: 4px solid var(--accent);
+}
+
+.data-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.data-table th, .data-table td {
+  padding: 8px;
+  border-bottom: 1px solid #ccc;
+}
+.data-table th {
+  background: #e2e8f0;
+  font-weight: bold;
+}
+
+.data-list pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+#mode-toggle {
+  float: right;
+  margin-left: auto;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid var(--accent);
+  padding: 6px 12px;
+  border-radius: 8px;
+  color: var(--accent);
+}
+
+.data-table {
+  overflow-x: auto;
+  margin: 20px auto;
+  max-width: 100%;
+  border-radius: 12px;
+  background: var(--card-bg-light);
+  backdrop-filter: blur(6px);
+  box-shadow: var(--shadow);
+  padding: 16px;
+  transition: background 0.3s;
+}
+
+body.dark-mode .data-table {
+  background: var(--card-bg-dark);
+}
+
+.data-table table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px;
+}
+
+.data-table th,
+.data-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid #ccc;
+  text-align: left;
+}
+
+.data-table th {
+  background-color: rgba(0, 0, 0, 0.05);
+  font-weight: bold;
+}
+
+body.dark-mode .data-table th {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.data-table tr:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+body.dark-mode .data-table tr:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+#data-controls {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin: 20px auto;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+
+#data-controls select,
+#data-controls button {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  background-color: white;
+  min-width: 180px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+#data-controls button {
+  min-width: 120px;
+  color: black;
+}
+
+body.dark-mode #data-controls select,
+body.dark-mode #data-controls button {
+  background-color: #2d3748;
+  color: #e2e8f0;
+  border-color: #4a5568;
+}

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="manifest" href="manifest.json" />
+  <title>PWA Task Manager</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Task Manager</h1>
+    <div>
+      <button id="mode-toggle">🌙 Toggle Dark Mode</button>
+      <button id="logout-btn">Logout</button>
+    </div>
+  </header>
+
+  <!-- API Data Viewer -->
+  <h2>View API Data</h2>
+  <div id="data-controls">
+    <select id="entity-selector">
+      <option value="tasks">Tasks</option>
+      <option value="achievements">Achievements</option>
+      <option value="calendar_entries">Calendar Entries</option>
+      <option value="progress_logs">Progress Logs</option>
+      <option value="user_settings">User Settings</option>
+      <option value="user_profiles">User Profiles</option>
+      <option value="users">Users</option>
+    </select>
+
+    <select id="view-mode">
+      <option value="list">List</option>
+      <option value="card">Card</option>
+      <option value="table">Table</option>
+    </select>
+
+    <button id="load-entity">Load Data</button>
+  </div>
+
+  <div id="api-data"></div>
+
+  <!-- App Logic -->
+  <script>
+    const token = localStorage.getItem('accessToken');
+    if (!token) window.location.href = '/login.html';
+
+    const apiData = document.getElementById('api-data');
+    const viewModeSelect = document.getElementById('view-mode');
+
+    document.getElementById('load-entity').addEventListener('click', async () => {
+      const entity = document.getElementById('entity-selector').value;
+      const res = await fetch(`/api/${entity}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (res.status === 401) {
+        return (window.location.href = '/login.html');
+      }
+
+      const data = await res.json();
+      renderData(data);
+    });
+
+    viewModeSelect.addEventListener('change', () => {
+      document.getElementById('load-entity').click();
+    });
+
+    function renderData(data) {
+      const mode = viewModeSelect.value;
+      apiData.innerHTML = '';
+
+      if (!Array.isArray(data) || data.length === 0) {
+        apiData.textContent = 'No data to display.';
+        return;
+      }
+
+      if (mode === 'list') {
+        const pre = document.createElement('pre');
+        pre.textContent = JSON.stringify(data, null, 2);
+        pre.classList.add('data-list');
+        apiData.appendChild(pre);
+      }
+
+      else if (mode === 'card') {
+        data.forEach(item => {
+          const div = document.createElement('div');
+          div.classList.add('data-card');
+          for (const [key, value] of Object.entries(item)) {
+            const p = document.createElement('p');
+            const formattedValue = key === 'date_awarded'
+              ? new Date(value).toLocaleString()
+              : value;
+            p.innerHTML = `<strong>${key}:</strong> ${formattedValue}`;
+            div.appendChild(p);
+          }
+          apiData.appendChild(div);
+        });
+      }
+
+      else if (mode === 'table') {
+        const table = document.createElement('table');
+        const thead = table.createTHead();
+        const headerRow = thead.insertRow();
+        const keys = Object.keys(data[0]);
+
+        keys.forEach(key => {
+          const th = document.createElement('th');
+          th.textContent = key;
+          headerRow.appendChild(th);
+        });
+
+        const tbody = table.createTBody();
+        data.forEach(item => {
+          const row = tbody.insertRow();
+          keys.forEach(key => {
+            const td = row.insertCell();
+            td.textContent = key === 'date_awarded'
+              ? new Date(item[key]).toLocaleString()
+              : item[key];
+          });
+        });
+
+        const wrapper = document.createElement('div');
+        wrapper.classList.add('data-table');
+        wrapper.appendChild(table);
+        apiData.appendChild(wrapper);
+      }
+    }
+
+    document.getElementById('mode-toggle').addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+    });
+
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      window.location.href = '/login.html';
+    });
+
+    if ('Notification' in window && Notification.permission !== 'granted') {
+      Notification.requestPermission();
+    }
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('serviceWorker.js').then(async reg => {
+        const subscription = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(
+            'BGtv18Gw9xNHYtH_R36gfbPG-jIKT2pHAUsTGKvg8sRBO6BfGqBjo30OBss26Lv4DtJBcmUXbCglwpf8gg55a_k'
+          )
+        });
+
+        await fetch('/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(subscription)
+        });
+      });
+
+      function urlBase64ToUint8Array(base64String) {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+        const rawData = atob(base64);
+        return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+      }
+    }
+  </script>
+
+  <script src="/src/app.js"></script>
+  <script src="/src/lazyload.js"></script>
+</body>
+</html>
