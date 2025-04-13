@@ -7,12 +7,17 @@ const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Enable CORS and JSON parsing
 app.use(cors());
 app.use(express.json());
+
+// Serve static files from /client/public BEFORE any route handling
+app.use(express.static(path.join(__dirname, 'client', 'public')));
 
 const checkJwt = require('./src/middleware/auth');
 const authRoutes = require('./src/routes/authRoutes');
 
+// Auth routes (e.g., login/signup, etc.)
 app.use('/api', authRoutes);
 
 const routes = [
@@ -63,12 +68,13 @@ app.post('/notify', (req, res) => {
     .catch(err => res.status(500).json({ error: err.message }));
 });
 
+// The /login.html route is now superfluous because login.html is served statically,
+// but you may keep it if needed:
 app.get('/login.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'client', 'public', 'login.html'));
 });
 
-app.use(express.static(path.join(__dirname, 'client', 'public')));
-
+// Global error handler
 app.use((err, req, res, next) => {
   console.error('Global error:', err);
   res.status(500).json({ error: 'Internal Server Error' });
