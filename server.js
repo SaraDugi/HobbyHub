@@ -1,16 +1,17 @@
 const express = require('express');
 const path = require('path');
 require('dotenv').config();
-const webPush = require('web-push');
 const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 3000;
+
 app.use(cors());
 app.use(express.json());
+
 app.use(express.static(path.join(__dirname, 'client', 'public')));
+
 const checkJwt = require('./src/middleware/auth');
 const authRoutes = require('./src/routes/authRoutes');
-
 app.use('/api', authRoutes);
 
 const routes = [
@@ -32,33 +33,12 @@ routes.forEach(({ path, file, protected: isProtected }) => {
   }
 });
 
-const subscriptions = [];
-
-webPush.setVapidDetails(
-  'mailto:admin@hobbyhub.com',
-  process.env.VAPID_PUBLIC_KEY,
-  process.env.VAPID_PRIVATE_KEY
-);
-
-app.post('/subscribe', (req, res) => {
-  const subscription = req.body;
-  subscriptions.push(subscription);
-  res.status(201).json({ message: 'Subscription stored.' });
+app.get('/funkcionalnosti-odjemalca/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client', 'public', 'funkcionalnosti.html'));
 });
 
-app.post('/notify', (req, res) => {
-  const { title, body } = req.body;
-  const payload = JSON.stringify({ title, body });
-
-  const results = subscriptions.map(sub =>
-    webPush.sendNotification(sub, payload).catch(err => {
-      console.error('Push error:', err);
-    })
-  );
-
-  Promise.all(results)
-    .then(() => res.status(200).json({ message: 'Notifications sent.' }))
-    .catch(err => res.status(500).json({ error: err.message }));
+app.get('/posebnosti/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client', 'public', 'posebnosti.txt'));
 });
 
 app.get('/login.html', (req, res) => {
@@ -71,11 +51,10 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(port, () => {
-  console.log(`\n🚀 Strežnik teče na: http://localhost:${port}`);
-  console.log('📁 Statika: /client/public');
-  console.log('🔐 Zaščiteni API-ji:');
+  console.log(`Strežnik teče na: http://localhost:${port}`);
+  console.log('Zaščiteni API-ji:');
   routes.forEach(({ path }) => console.log(`   ➤ ${path}`));
-  console.log('🔔 Potisna obvestila:');
-  console.log('   ➤ POST /subscribe');
-  console.log('   ➤ POST /notify\n');
+  console.log('Dodatne poti:');
+  console.log('   ➤ /funkcionalnosti-odjemalca/');
+  console.log('   ➤ /posebnosti/');
 });

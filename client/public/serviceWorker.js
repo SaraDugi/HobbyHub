@@ -1,4 +1,3 @@
-// Define a cache name and the list of static assets that do not change
 const CACHE_NAME = 'pwa-task-manager-cache-v1';
 const STATIC_ASSETS = [
   '/',
@@ -10,7 +9,6 @@ const STATIC_ASSETS = [
   '/src/lazyload.js'
 ];
 
-// Install event: cache static assets
 self.addEventListener('install', event => {
   console.log('[ServiceWorker] Installing and caching static assets...');
   event.waitUntil(
@@ -23,7 +21,6 @@ self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
-// Activate event: clear old caches
 self.addEventListener('activate', event => {
   console.log('[ServiceWorker] Activating and cleaning up old caches...');
   event.waitUntil(
@@ -39,7 +36,6 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// Fetch event: respond with cached assets when available, fall back to network if not cached
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   event.respondWith(
@@ -52,7 +48,6 @@ self.addEventListener('fetch', event => {
   );
 });
 
-// Listen for push events and display notifications
 self.addEventListener('push', event => {
   console.log('[ServiceWorker] Push Received.');
   let notificationData = {};
@@ -72,7 +67,6 @@ self.addEventListener('push', event => {
   event.waitUntil(self.registration.showNotification(title, options));
 });
 
-// Handle notification click events
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   event.waitUntil(clients.openWindow('/'));

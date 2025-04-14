@@ -17,11 +17,9 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
         throw new Error(data.error || 'Login failed');
       }
   
-      // ✅ Store JWTs
       localStorage.setItem('accessToken', data.accessToken);
       localStorage.setItem('refreshToken', data.refreshToken);
   
-      // ✅ Redirect to main app
       window.location.href = '/index.html';
     } catch (err) {
       document.getElementById('login-error').textContent = err.message;

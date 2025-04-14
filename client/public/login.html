@@ -6,7 +6,6 @@
   <title>Login - Task Manager</title>
   <link rel="stylesheet" href="login.css" />
   <style>
-    /* Basic style for lazy loaded images */
     img.lazy {
       opacity: 0;
       transition: opacity 0.3s ease-in-out;
@@ -14,8 +13,6 @@
     img.lazy.loaded {
       opacity: 1;
     }
-    
-    /* Optional styling for the login container */
     main {
       max-width: 400px;
       margin: 2rem auto;
@@ -52,7 +49,6 @@
   </div>
 
   <script>
-    // Function to initialize lazy loading using IntersectionObserver.
     function initLazyLoading() {
       const lazyImages = document.querySelectorAll('img.lazy');
       console.log('[LazyLoad] Found', lazyImages.length, 'lazy images');
@@ -95,10 +91,7 @@
       }
     }
 
-    // Initialize lazy loading on DOM content loaded.
     document.addEventListener("DOMContentLoaded", initLazyLoading);
-
-    // Login form handling.
     document.getElementById('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const username = document.getElementById('username').value.trim();
@@ -113,10 +106,8 @@
         if (!response.ok) {
           throw new Error(data.error || 'Login failed');
         }
-        // Store JWT tokens
         localStorage.setItem('accessToken', data.accessToken);
         localStorage.setItem('refreshToken', data.refreshToken);
-        // Redirect to main app
         window.location.href = '/index.html';
       } catch (err) {
         document.getElementById('login-error').textContent = err.message;

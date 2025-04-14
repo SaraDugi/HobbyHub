@@ -582,7 +582,6 @@
       form.innerHTML = '';
       modal.classList.remove('hidden');
       if (template && Object.keys(template).length > 0) {
-        // Generate form inputs for each key except "id" and, if adding a user, skip "created_at"
         for (const key of Object.keys(template)) {
           if (key === 'id') continue;
           if (entity === "users" && key.toLowerCase().includes("created_at")) continue;
@@ -640,7 +639,6 @@
               }
             }
           }
-          // For entity "users", automatically add the current time as created_at
           if (entity === "users" && !data.hasOwnProperty("created_at")) {
             data["created_at"] = new Date().toISOString().slice(0, 19).replace('T', ' ');
           }
