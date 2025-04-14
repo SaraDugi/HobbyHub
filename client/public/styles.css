@@ -310,3 +310,9 @@ body.dark-mode #data-controls button {
 .modal-actions {
   text-align: right;
 }
+
+#voice-info {
+  background: var(--card-bg-light);
+  color: var(--text-light);
+  transition: background 0.3s, color 0.3s;
+}

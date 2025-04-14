@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="sl">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <link rel="icon" href="/favicon.ico" />
@@ -8,54 +8,66 @@
   <meta name="theme-color" content="#3f51b5" />
   <title>PWA Task Manager</title>
   <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/annyang/2.6.1/annyang.min.js"></script>
 </head>
 <body>
   <header>
     <h1>Task Manager</h1>
     <div>
-      <button id="mode-toggle">🌙 Preklopi temni način</button>
-      <button id="logout-btn">Odjava</button>
+      <button id="mode-toggle">🌙 Toggle Dark Mode</button>
+      <button id="logout-btn">Log Out</button>
     </div>
   </header>
 
-  <h2>Prikaži podatke iz API-ja</h2>
+  <div id="voice-info">
+    <p><strong>Available Voice Commands:</strong></p>
+    <ul>
+      <li>"show achievements" – displays achievements (loads achievements)</li>
+      <li>"log out" – logs you out of the app</li>
+      <li>"dark mode" – toggles dark mode</li>
+      <li>"add new entry" – opens the form to add a new entry</li>
+      <li>"show tasks" – switches to tasks and loads data</li>
+    </ul>
+    <button id="start-voice">Start Voice Commands</button>
+  </div>
+
+  <h2>Show Data from API</h2>
   <div id="data-controls">
     <select id="entity-selector">
-      <option value="tasks">Opravila</option>
-      <option value="achievements" selected>Dosežki</option>
-      <option value="calendar_entries">Koledarski vnosi</option>
-      <option value="progress_logs">Dnevnik napredka</option>
-      <option value="user_settings">Nastavitve uporabnika</option>
-      <option value="user_profiles">Uporabniški profili</option>
-      <option value="users">Uporabniki</option>
+      <option value="tasks">Tasks</option>
+      <option value="achievements" selected>Achievements</option>
+      <option value="calendar_entries">Calendar Entries</option>
+      <option value="progress_logs">Progress Logs</option>
+      <option value="user_settings">User Settings</option>
+      <option value="user_profiles">User Profiles</option>
+      <option value="users">Users</option>
     </select>
 
     <select id="view-mode">
-      <option value="list">Seznam</option>
-      <option value="card">Kartice</option>
-      <option value="table">Tabela</option>
+      <option value="list">List</option>
+      <option value="card">Cards</option>
+      <option value="table">Table</option>
     </select>
 
-    <button id="load-entity">Naloži podatke</button>
+    <button id="load-entity">Load Data</button>
   </div>
 
-  <div id="search-controls" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
-    <input type="text" id="search-id" placeholder="Išči po ID-ju" style="width: 300px;" />
-    <button id="search-by-id">Išči</button>
-    <button id="add-entry">Dodaj vnos</button>
+  <div id="search-controls">
+    <input type="text" id="search-id" placeholder="Search by ID" />
+    <button id="search-by-id">Search</button>
+    <button id="add-entry">Add Entry</button>
   </div>
 
   <div id="achievementsContainer"></div>
-
   <div id="api-data"></div>
 
   <div id="edit-modal" class="modal hidden">
     <div class="modal-content">
-      <h3 id="modal-title">Uredi vnos</h3>
+      <h3 id="modal-title">Edit Entry</h3>
       <form id="edit-form"></form>
       <div class="modal-actions">
-        <button type="submit" form="edit-form">Shrani</button>
-        <button type="button" id="cancel-edit">Prekliči</button>
+        <button type="submit" form="edit-form">Save</button>
+        <button type="button" id="cancel-edit">Cancel</button>
       </div>
     </div>
   </div>
@@ -72,12 +84,19 @@
       }
     }
 
-    const apiData = document.getElementById('api-data');
+    function speakResponse(message) {
+      const utterance = new SpeechSynthesisUtterance(message);
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function getContainer(entity) {
+      return entity === "achievements"
+             ? document.getElementById("achievementsContainer")
+             : document.getElementById("api-data");
+    }
+
     const viewModeSelect = document.getElementById('view-mode');
-    const deletableEntities = [
-      'tasks', 'achievements', 'calendar_entries',
-      'progress_logs', 'user_settings', 'user_profiles', 'users'
-    ];
+    const deletableEntities = ['tasks', 'achievements', 'calendar_entries', 'progress_logs', 'user_settings', 'user_profiles', 'users'];
     const editableEntities = [...deletableEntities];
 
     const DB_NAME = 'achievementsDB';
@@ -89,12 +108,10 @@
       return new Promise((resolve, reject) => {
         const request = indexedDB.open(DB_NAME, DB_VERSION);
         request.onerror = (event) => {
-          console.error("IndexedDB napaka:", event.target.error);
+          console.error("IndexedDB error:", event.target.error);
           reject(event.target.error);
         };
-        request.onsuccess = () => {
-          resolve(request.result);
-        };
+        request.onsuccess = () => resolve(request.result);
         request.onupgradeneeded = (event) => {
           const db = event.target.result;
           if (!db.objectStoreNames.contains(ACHIEVEMENTS_STORE)) {
@@ -172,26 +189,28 @@
     }
 
     function fetchAchievements() {
-      console.log("fetchAchievements() se izvaja.");
+      console.log("Executing fetchAchievements().");
+      document.getElementById("achievementsContainer").innerHTML = "";
+      document.getElementById("api-data").innerHTML = "";
       fetch("/api/achievements", { headers: { Authorization: `Bearer ${token}` } })
         .then(response => response.json())
         .then(data => {
-          console.log("Dosežki, prejeta iz API-ja:", data);
+          console.log("Achievements received from API:", data);
           saveAchievementsDB(data)
-            .then(() => console.log("Dosežki shranjeni v IndexedDB."))
-            .catch(err => console.error("Napaka pri shranjevanju v IndexedDB:", err));
-          updateUI(data);
+            .then(() => console.log("Achievements saved in IndexedDB."))
+            .catch(err => console.error("Error saving to IndexedDB:", err));
+          renderData(data, "achievements");
         })
         .catch(error => {
-          console.error("Napaka pri pridobivanju dosežkov s strežnika, uporaba IndexedDB:", error);
+          console.error("Error fetching achievements from server, using IndexedDB:", error);
           getAchievementsDB()
-            .then(localData => { updateUI(localData); })
-            .catch(err => console.error("Napaka pri branju iz IndexedDB:", err));
+            .then(localData => { renderData(localData, "achievements"); })
+            .catch(err => console.error("Error reading from IndexedDB:", err));
         });
     }
 
     function createAchievement(achievementData) {
-      console.log("Ustvarjam dosežek:", achievementData);
+      console.log("Creating achievement:", achievementData);
       if (navigator.onLine) {
         fetch("/api/achievements", {
           method: "POST",
@@ -203,33 +222,33 @@
         })
           .then(response => response.json())
           .then(newAchievement => {
-            console.log("Dosežek uspešno ustvarjen online:", newAchievement);
+            console.log("Achievement successfully created online:", newAchievement);
             newAchievement.synced = true;
             getAchievementsDB()
               .then(existing => {
                 const updated = existing.concat(newAchievement);
                 saveAchievementsDB(updated)
-                  .then(() => updateUI(updated))
-                  .catch(err => console.error("Napaka pri shranjevanju dosežkov:", err));
+                  .then(() => renderData(updated, "achievements"))
+                  .catch(err => console.error("Error saving achievements:", err));
               });
           })
           .catch(error => {
-            console.error("Napaka pri ustvarjanju dosežka online:", error);
+            console.error("Error creating achievement online:", error);
           });
       } else {
         achievementData.synced = false;
         addUnsyncedAchievementDB(achievementData)
           .then(localId => {
-            console.log("Dosežek shranjen offline z localId:", localId);
+            console.log("Achievement saved offline with localId:", localId);
             getAchievementsDB()
               .then(existing => {
                 const updated = existing.concat(achievementData);
                 saveAchievementsDB(updated)
-                  .then(() => updateUI(updated))
-                  .catch(err => console.error("Napaka pri shranjevanju dosežkov:", err));
+                  .then(() => renderData(updated, "achievements"))
+                  .catch(err => console.error("Error saving achievements:", err));
               });
           })
-          .catch(err => console.error("Napaka pri shranjevanju nesinhroniziranega dosežka:", err));
+          .catch(err => console.error("Error saving unsynced achievement:", err));
       }
     }
 
@@ -237,7 +256,7 @@
       getUnsyncedAchievementsDB()
         .then(unsynced => {
           if (unsynced.length > 0) {
-            console.log(`Sinhroniziram ${unsynced.length} dosežkov, ki niso sinhronizirani...`);
+            console.log(`Syncing ${unsynced.length} unsynced achievements...`);
             unsynced.forEach(achievement => {
               fetch("/api/achievements", {
                 method: "POST",
@@ -249,69 +268,161 @@
               })
                 .then(response => response.json())
                 .then(newAchievement => {
-                  console.log("Dosežek sinhroniziran:", newAchievement);
+                  console.log("Achievement synced:", newAchievement);
                   deleteUnsyncedAchievementDB(achievement.localId)
                     .then(() => {
                       getAchievementsDB()
                         .then(existing => {
                           const updated = existing.concat(newAchievement);
                           saveAchievementsDB(updated)
-                            .then(() => updateUI(updated))
-                            .catch(err => console.error("Napaka pri posodabljanju dosežkov:", err));
+                            .then(() => renderData(updated, "achievements"))
+                            .catch(err => console.error("Error updating achievements:", err));
                         })
-                        .catch(err => console.error("Napaka pri branju dosežkov:", err));
+                        .catch(err => console.error("Error reading achievements:", err));
                     })
-                    .catch(err => console.error("Napaka pri brisanju nesinhroniziranega dosežka:", err));
+                    .catch(err => console.error("Error deleting unsynced achievement:", err));
                 })
                 .catch(error => {
-                  console.error("Sinhronizacija ni uspela za dosežek:", achievement, error);
+                  console.error("Sync failed for achievement:", achievement, error);
                 });
             });
           }
         })
-        .catch(err => console.error("Napaka pri branju nesinhroniziranih dosežkov:", err));
+        .catch(err => console.error("Error reading unsynced achievements:", err));
     }
 
     window.addEventListener("online", () => {
-      console.log("Povezava je vzpostavljena. Sinhroniziram offline podatke...");
+      console.log("Online. Syncing offline data...");
       syncAchievements();
     });
 
-    function updateUI(achievements) {
-      const container = document.getElementById("achievementsContainer");
-      if (!container) return;
-      container.innerHTML = "";
-      achievements.forEach(achievement => {
-        const div = document.createElement("div");
-        div.textContent = achievement.title || JSON.stringify(achievement);
-        container.appendChild(div);
-      });
-    }
-
-    document.getElementById('load-entity').addEventListener('click', async () => {
-      const entity = document.getElementById('entity-selector').value;
-      if (entity === "achievements") {
-        fetchAchievements();
-      } else {
-        try {
-          const res = await fetch(`/api/${entity}`, { headers: { Authorization: `Bearer ${token}` } });
-          if (res.status === 401) {
-            window.location.href = '/login.html';
-            return;
-          }
-          const data = await res.json();
-          renderData(data, entity);
-        } catch (error) {
-          console.error('Napaka pri nalaganju podatkov:', error);
-          showNotification('Prišlo je do napake pri nalaganju podatkov.');
-        }
+    // Main renderData function with fixes for date fields including "start_time" and "end_time"
+    function renderData(data, entity) {
+      if (!Array.isArray(data)) {
+        data = [data];
       }
-    });
-
-    viewModeSelect.addEventListener('change', () => {
-      document.getElementById('load-entity').click();
-    });
-
+      document.getElementById("achievementsContainer").innerHTML = "";
+      document.getElementById("api-data").innerHTML = "";
+      const container = getContainer(entity);
+      if (!data || data.length === 0) {
+        container.textContent = 'No data to display.';
+        return;
+      }
+      
+      const mode = viewModeSelect.value;
+    
+      function formatValueElement(key, value) {
+        const isDateField = ['date', 'timestamp', 'created_at', 'updated_at', 'start_time', 'end_time'].some(sub =>
+          key.toLowerCase().includes(sub)
+        );
+        if (isDateField) {
+          return document.createTextNode(formatDate(value));
+        }
+        if (typeof value === 'object' && value !== null) {
+          return renderNestedObject(value);
+        }
+        return document.createTextNode(value);
+      }
+    
+      function renderNestedObject(obj) {
+        const table = document.createElement('table');
+        table.classList.add('nested-table');
+        for (const [k, v] of Object.entries(obj)) {
+          const row = table.insertRow();
+          const th = document.createElement('th');
+          th.textContent = k;
+          row.appendChild(th);
+          const td = document.createElement('td');
+          if (typeof v === 'object' && v !== null) {
+            td.appendChild(renderNestedObject(v));
+          } else {
+            td.textContent = v;
+          }
+          row.appendChild(td);
+        }
+        return table;
+      }
+    
+      if (mode === 'list') {
+        const pre = document.createElement('pre');
+        pre.textContent = JSON.stringify(data, null, 2);
+        pre.classList.add('data-list');
+        container.appendChild(pre);
+    
+      } else if (mode === 'card') {
+        data.forEach(item => {
+          const div = document.createElement('div');
+          div.classList.add('data-card');
+          for (const [key, value] of Object.entries(item)) {
+            const p = document.createElement('p');
+            const label = document.createElement('strong');
+            label.textContent = key + ': ';
+            p.appendChild(label);
+            const valueNode = formatValueElement(key, value);
+            p.appendChild(valueNode);
+            div.appendChild(p);
+          }
+          if (editableEntities.includes(entity)) {
+            const editBtn = document.createElement('button');
+            editBtn.textContent = entity === "achievements" ? 'Uredi' : 'Edit';
+            editBtn.classList.add('edit-btn');
+            editBtn.onclick = () => showEditModal(entity, item);
+            div.appendChild(editBtn);
+          }
+          if (deletableEntities.includes(entity)) {
+            const delBtn = document.createElement('button');
+            delBtn.textContent = entity === "achievements" ? 'Izbriši' : 'Delete';
+            delBtn.classList.add('delete-btn');
+            delBtn.onclick = () => deleteItem(entity, item.id);
+            div.appendChild(delBtn);
+          }
+          container.appendChild(div);
+        });
+    
+      } else if (mode === 'table') {
+        const table = document.createElement('table');
+        const thead = table.createTHead();
+        const headerRow = thead.insertRow();
+        const keys = Object.keys(data[0]);
+        keys.forEach(key => {
+          const th = document.createElement('th');
+          th.textContent = key;
+          headerRow.appendChild(th);
+        });
+        if (editableEntities.includes(entity)) {
+          const th = document.createElement('th');
+          th.textContent = entity === "achievements" ? 'Akcije' : 'Actions';
+          headerRow.appendChild(th);
+        }
+        const tbody = table.createTBody();
+        data.forEach(item => {
+          const row = tbody.insertRow();
+          keys.forEach(key => {
+            const td = row.insertCell();
+            const valueElem = formatValueElement(key, item[key]);
+            td.appendChild(valueElem);
+          });
+          if (editableEntities.includes(entity)) {
+            const td = row.insertCell();
+            const editBtn = document.createElement('button');
+            editBtn.textContent = entity === "achievements" ? 'Uredi' : 'Edit';
+            editBtn.classList.add('edit-btn');
+            editBtn.onclick = () => showEditModal(entity, item);
+            td.appendChild(editBtn);
+            const delBtn = document.createElement('button');
+            delBtn.textContent = entity === "achievements" ? 'Izbriši' : 'Delete';
+            delBtn.classList.add('delete-btn');
+            delBtn.onclick = () => deleteItem(entity, item.id);
+            td.appendChild(delBtn);
+          }
+        });
+        const wrapper = document.createElement('div');
+        wrapper.classList.add('data-table');
+        wrapper.appendChild(table);
+        container.appendChild(wrapper);
+      }
+    }
+    
     function formatDate(value) {
       const date = new Date(value);
       return !isNaN(date)
@@ -327,116 +438,65 @@
         : value;
     }
 
-    function renderData(data, entity) {
-      const mode = viewModeSelect.value;
-      apiData.innerHTML = '';
-      if (!Array.isArray(data) || data.length === 0) {
-        apiData.textContent = 'Ni podatkov za prikaz.';
-        return;
-      }
-      if (mode === 'list') {
-        const pre = document.createElement('pre');
-        pre.textContent = JSON.stringify(data, null, 2);
-        pre.classList.add('data-list');
-        apiData.appendChild(pre);
-      } else if (mode === 'card') {
-        data.forEach(item => {
-          const div = document.createElement('div');
-          div.classList.add('data-card');
-          for (const [key, value] of Object.entries(item)) {
-            const p = document.createElement('p');
-            const isDateField = ['date', 'timestamp', 'created_at', 'updated_at'].some(sub =>
-              key.toLowerCase().includes(sub)
-            );
-            const formattedValue = isDateField ? formatDate(value) : value;
-            p.innerHTML = `<strong>${key}:</strong> ${formattedValue}`;
-            div.appendChild(p);
+    document.getElementById('load-entity').addEventListener('click', async () => {
+      const entity = document.getElementById('entity-selector').value;
+      document.getElementById("achievementsContainer").innerHTML = "";
+      document.getElementById("api-data").innerHTML = "";
+      if (entity === "achievements") {
+        fetchAchievements();
+      } else {
+        try {
+          const res = await fetch(`/api/${entity}`, { headers: { Authorization: `Bearer ${token}` } });
+          if (res.status === 401) {
+            window.location.href = '/login.html';
+            return;
           }
-          if (editableEntities.includes(entity)) {
-            const editBtn = document.createElement('button');
-            editBtn.textContent = 'Uredi';
-            editBtn.classList.add('edit-btn');
-            editBtn.onclick = () => showEditModal(entity, item);
-            div.appendChild(editBtn);
-          }
-          if (deletableEntities.includes(entity)) {
-            const delBtn = document.createElement('button');
-            delBtn.textContent = 'Izbriši';
-            delBtn.classList.add('delete-btn');
-            delBtn.onclick = () => deleteItem(entity, item.id);
-            div.appendChild(delBtn);
-          }
-          apiData.appendChild(div);
-        });
-      } else if (mode === 'table') {
-        const table = document.createElement('table');
-        const thead = table.createTHead();
-        const headerRow = thead.insertRow();
-        const keys = Object.keys(data[0]);
-        keys.forEach(key => {
-          const th = document.createElement('th');
-          th.textContent = key;
-          headerRow.appendChild(th);
-        });
-        if (editableEntities.includes(entity)) {
-          const th = document.createElement('th');
-          th.textContent = 'Akcije';
-          headerRow.appendChild(th);
+          const data = await res.json();
+          renderData(data, entity);
+        } catch (error) {
+          console.error('Error loading data:', error);
+          showNotification('There was an error loading the data.');
         }
-        const tbody = table.createTBody();
-        data.forEach(item => {
-          const row = tbody.insertRow();
-          keys.forEach(key => {
-            const td = row.insertCell();
-            const isDateField = ['date', 'timestamp', 'created_at', 'updated_at'].some(sub =>
-              key.toLowerCase().includes(sub)
-            );
-            td.textContent = isDateField ? formatDate(item[key]) : item[key];
-          });
-          if (editableEntities.includes(entity)) {
-            const td = row.insertCell();
-            const editBtn = document.createElement('button');
-            editBtn.textContent = 'Uredi';
-            editBtn.classList.add('edit-btn');
-            editBtn.onclick = () => showEditModal(entity, item);
-            td.appendChild(editBtn);
-            const delBtn = document.createElement('button');
-            delBtn.textContent = 'Izbriši';
-            delBtn.classList.add('delete-btn');
-            delBtn.onclick = () => deleteItem(entity, item.id);
-            td.appendChild(delBtn);
-          }
-        });
-        const wrapper = document.createElement('div');
-        wrapper.classList.add('data-table');
-        wrapper.appendChild(table);
-        apiData.appendChild(wrapper);
       }
-    }
+    });
+
+    viewModeSelect.addEventListener('change', () => {
+      document.getElementById('load-entity').click();
+    });
 
     async function deleteItem(entity, id) {
-      if (!confirm('Ali ste prepričani, da želite izbrisati ta vnos?')) return;
+      if (!confirm(entity === "achievements" 
+        ? 'Ali ste prepričani, da želite izbrisati ta vnos?' 
+        : 'Are you sure you want to delete this entry?')) return;
       try {
         const res = await fetch(`/api/${entity}/${id}`, {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.ok) {
-          showNotification('Vnos uspešno izbrisan.');
+          showNotification(entity === "achievements" 
+            ? 'Vnos uspešno izbrisan.' 
+            : 'Entry successfully deleted.');
           document.getElementById('load-entity').click();
         } else {
-          showNotification('Brisanje vnosa ni uspelo.');
+          showNotification(entity === "achievements" 
+            ? 'Brisanje vnosa ni uspelo.' 
+            : 'Deletion failed.');
         }
       } catch (error) {
-        console.error('Napaka pri brisanju:', error);
-        showNotification('Med brisanjem je prišlo do napake.');
+        console.error(entity === "achievements" 
+          ? 'Napaka pri brisanju:' 
+          : 'Error deleting:', error);
+        showNotification(entity === "achievements" 
+          ? 'Med brisanjem je prišlo do napake.' 
+          : 'An error occurred during deletion.');
       }
     }
 
     function showEditModal(entity, item) {
       const modal = document.getElementById('edit-modal');
       const form = document.getElementById('edit-form');
-      document.getElementById('modal-title').textContent = 'Uredi vnos';
+      document.getElementById('modal-title').textContent = entity === "achievements" ? 'Uredi vnos' : 'Edit Entry';
       form.innerHTML = '';
       modal.classList.remove('hidden');
       for (const [key, value] of Object.entries(item)) {
@@ -448,7 +508,12 @@
         if (typeof value === 'number') {
           input.type = 'number';
           input.value = value;
-        } else if (key.toLowerCase().includes('date') || key.toLowerCase().includes('timestamp')) {
+        } else if (
+          key.toLowerCase().includes('date') || 
+          key.toLowerCase().includes('timestamp') ||
+          key.toLowerCase().includes('start_time') ||
+          key.toLowerCase().includes('end_time')
+        ) {
           input.type = 'datetime-local';
           const date = new Date(value);
           if (!isNaN(date)) {
@@ -467,7 +532,12 @@
         const data = {};
         for (const [key, value] of formData.entries()) {
           if (value === '') continue;
-          if (key.toLowerCase().includes('date') || key.toLowerCase().includes('timestamp')) {
+          if (
+            key.toLowerCase().includes('date') || 
+            key.toLowerCase().includes('timestamp') ||
+            key.toLowerCase().includes('start_time') ||
+            key.toLowerCase().includes('end_time')
+          ) {
             const date = new Date(value);
             if (!isNaN(date)) {
               data[key] = date.toISOString().slice(0, 19).replace('T', ' ');
@@ -486,36 +556,48 @@
             body: JSON.stringify(data)
           });
           if (res.ok) {
-            showNotification('Vnos uspešno posodobljen!');
+            showNotification(entity === "achievements" ? 'Vnos uspešno posodobljen!' : 'Entry successfully updated!');
             modal.classList.add('hidden');
             document.getElementById('load-entity').click();
           } else {
             const error = await res.json();
-            showNotification(`Posodobitev ni uspela: ${error.message || res.status}`);
+            showNotification(entity === "achievements" 
+              ? `Posodobitev ni uspela: ${error.message || res.status}` 
+              : `Update failed: ${error.message || res.status}`);
           }
         } catch (err) {
-          showNotification('Med posodabljanjem je prišlo do napake.');
+          showNotification(entity === "achievements" 
+            ? 'Med posodabljanjem je prišlo do napake.' 
+            : 'An error occurred while updating.');
           console.error(err);
         }
       };
     }
 
+    // Modified showAddModal: if adding a user (entity "users"), skip the "created_at" input and auto-set it.
     function showAddModal(entity, template) {
       const modal = document.getElementById('edit-modal');
       const form = document.getElementById('edit-form');
-      document.getElementById('modal-title').textContent = 'Dodaj nov vnos';
+      document.getElementById('modal-title').textContent = entity === "achievements" ? 'Dodaj nov vnos' : 'Add New Entry';
       form.innerHTML = '';
       modal.classList.remove('hidden');
       if (template && Object.keys(template).length > 0) {
+        // Generate form inputs for each key except "id" and, if adding a user, skip "created_at"
         for (const key of Object.keys(template)) {
           if (key === 'id') continue;
+          if (entity === "users" && key.toLowerCase().includes("created_at")) continue;
           const input = document.createElement('input');
           input.name = key;
           input.placeholder = key;
           input.required = true;
           if (typeof template[key] === 'number') {
             input.type = 'number';
-          } else if (key.toLowerCase().includes('date') || key.toLowerCase().includes('timestamp')) {
+          } else if (
+            key.toLowerCase().includes('date') ||
+            key.toLowerCase().includes('timestamp') ||
+            key.toLowerCase().includes('start_time') ||
+            key.toLowerCase().includes('end_time')
+          ) {
             input.type = 'datetime-local';
           } else {
             input.type = 'text';
@@ -526,7 +608,7 @@
       } else {
         const textarea = document.createElement('textarea');
         textarea.name = 'json';
-        textarea.placeholder = 'Vnesite JSON podatke za nov vnos';
+        textarea.placeholder = entity === "achievements" ? 'Vnesite JSON podatke za nov vnos' : 'Enter JSON data for the new entry';
         textarea.required = true;
         textarea.style.width = '100%';
         textarea.style.height = '200px';
@@ -540,7 +622,12 @@
           data = {};
           for (const [key, value] of formData.entries()) {
             if (value === '') continue;
-            if (key.toLowerCase().includes('date') || key.toLowerCase().includes('timestamp')) {
+            if (
+              key.toLowerCase().includes('date') ||
+              key.toLowerCase().includes('timestamp') ||
+              key.toLowerCase().includes('start_time') ||
+              key.toLowerCase().includes('end_time')
+            ) {
               const date = new Date(value);
               if (!isNaN(date)) {
                 data[key] = date.toISOString().slice(0, 19).replace('T', ' ');
@@ -553,12 +640,16 @@
               }
             }
           }
+          // For entity "users", automatically add the current time as created_at
+          if (entity === "users" && !data.hasOwnProperty("created_at")) {
+            data["created_at"] = new Date().toISOString().slice(0, 19).replace('T', ' ');
+          }
         } else {
           const jsonVal = form.elements['json'].value;
           try {
             data = JSON.parse(jsonVal);
           } catch (err) {
-            showNotification('Neveljaven JSON.');
+            showNotification(entity === "achievements" ? 'Neveljaven JSON.' : 'Invalid JSON.');
             return;
           }
         }
@@ -572,15 +663,19 @@
             body: JSON.stringify(data)
           });
           if (res.ok) {
-            showNotification('Nov vnos je bil uspešno ustvarjen!');
+            showNotification(entity === "achievements" ? 'Nov vnos je bil uspešno ustvarjen!' : 'New entry created successfully!');
             modal.classList.add('hidden');
             document.getElementById('load-entity').click();
           } else {
             const error = await res.json();
-            showNotification(`Ustvarjanje ni uspelo: ${error.message || res.status}`);
+            showNotification(entity === "achievements" 
+              ? `Ustvarjanje ni uspelo: ${error.message || res.status}` 
+              : `Creation failed: ${error.message || res.status}`);
           }
         } catch (err) {
-          showNotification('Med ustvarjanjem je prišlo do napake.');
+          showNotification(entity === "achievements" 
+            ? 'Med ustvarjanjem je prišlo do napake.' 
+            : 'An error occurred while creating the entry.');
           console.error(err);
         }
       };
@@ -592,6 +687,7 @@
 
     document.getElementById('mode-toggle').addEventListener('click', () => {
       document.body.classList.toggle('dark-mode');
+      document.getElementById('voice-info').classList.toggle('dark-mode');
     });
 
     document.getElementById('logout-btn').addEventListener('click', () => {
@@ -607,7 +703,7 @@
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('serviceWorker.js')
         .then(async reg => {
-          console.log('[Main] ServiceWorker uspešno registriran.');
+          console.log('[Main] ServiceWorker registered successfully.');
           const subscription = await reg.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: urlBase64ToUint8Array(
@@ -620,7 +716,7 @@
             body: JSON.stringify(subscription)
           });
         })
-        .catch(err => console.error('[Main] Registracija ServiceWorkerja ni uspela:', err));
+        .catch(err => console.error('[Main] ServiceWorker registration failed:', err));
       
       function urlBase64ToUint8Array(base64String) {
         const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -634,7 +730,7 @@
       const entity = document.getElementById('entity-selector').value;
       const searchId = document.getElementById('search-id').value.trim();
       if (!searchId) {
-        showNotification("Prosim vnesite ID za iskanje.");
+        showNotification("Please enter an ID to search.");
         return;
       }
       try {
@@ -646,15 +742,15 @@
           return;
         }
         if (res.status === 404) {
-          showNotification('Vnos ni bil najden.');
+          showNotification(entity === "achievements" ? 'Vnos ni bil najden.' : 'Entry not found.');
           return;
         }
         const data = await res.json();
         const resultData = Array.isArray(data) ? data : [data];
         renderData(resultData, entity);
       } catch (error) {
-        console.error('Napaka pri iskanju:', error);
-        showNotification('Med iskanjem je prišlo do napake.');
+        console.error(entity === "achievements" ? 'Napaka pri iskanju:' : 'Error during search:', error);
+        showNotification(entity === "achievements" ? 'Med iskanjem je prišlo do napake.' : 'An error occurred during search.');
       }
     });
 
@@ -662,9 +758,7 @@
       const entity = document.getElementById('entity-selector').value;
       let template = {};
       try {
-        const res = await fetch(`/api/${entity}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const res = await fetch(`/api/${entity}`, { headers: { Authorization: `Bearer ${token}` } });
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0) {
@@ -694,110 +788,50 @@
       }
     });
 
-    function renderData(data, entity) {
-      const mode = viewModeSelect.value;
-      apiData.innerHTML = '';
-      if (!Array.isArray(data) || data.length === 0) {
-        apiData.textContent = 'Ni podatkov za prikaz.';
-        return;
-      }
-      if (mode === 'list') {
-        const pre = document.createElement('pre');
-        pre.textContent = JSON.stringify(data, null, 2);
-        pre.classList.add('data-list');
-        apiData.appendChild(pre);
-      } else if (mode === 'card') {
-        data.forEach(item => {
-          const div = document.createElement('div');
-          div.classList.add('data-card');
-          for (const [key, value] of Object.entries(item)) {
-            const p = document.createElement('p');
-            const isDateField = ['date', 'timestamp', 'created_at', 'updated_at'].some(sub =>
-              key.toLowerCase().includes(sub)
-            );
-            const formattedValue = isDateField ? formatDate(value) : value;
-            p.innerHTML = `<strong>${key}:</strong> ${formattedValue}`;
-            div.appendChild(p);
-          }
-          if (editableEntities.includes(entity)) {
-            const editBtn = document.createElement('button');
-            editBtn.textContent = 'Uredi';
-            editBtn.classList.add('edit-btn');
-            editBtn.onclick = () => showEditModal(entity, item);
-            div.appendChild(editBtn);
-          }
-          if (deletableEntities.includes(entity)) {
-            const delBtn = document.createElement('button');
-            delBtn.textContent = 'Izbriši';
-            delBtn.classList.add('delete-btn');
-            delBtn.onclick = () => deleteItem(entity, item.id);
-            div.appendChild(delBtn);
-          }
-          apiData.appendChild(div);
-        });
-      } else if (mode === 'table') {
-        const table = document.createElement('table');
-        const thead = table.createTHead();
-        const headerRow = thead.insertRow();
-        const keys = Object.keys(data[0]);
-        keys.forEach(key => {
-          const th = document.createElement('th');
-          th.textContent = key;
-          headerRow.appendChild(th);
-        });
-        if (editableEntities.includes(entity)) {
-          const th = document.createElement('th');
-          th.textContent = 'Akcije';
-          headerRow.appendChild(th);
-        }
-        const tbody = table.createTBody();
-        data.forEach(item => {
-          const row = tbody.insertRow();
-          keys.forEach(key => {
-            const td = row.insertCell();
-            const isDateField = ['date', 'timestamp', 'created_at', 'updated_at'].some(sub =>
-              key.toLowerCase().includes(sub)
-            );
-            td.textContent = isDateField ? formatDate(item[key]) : item[key];
-          });
-          if (editableEntities.includes(entity)) {
-            const td = row.insertCell();
-            const editBtn = document.createElement('button');
-            editBtn.textContent = 'Uredi';
-            editBtn.classList.add('edit-btn');
-            editBtn.onclick = () => showEditModal(entity, item);
-            td.appendChild(editBtn);
-            const delBtn = document.createElement('button');
-            delBtn.textContent = 'Izbriši';
-            delBtn.classList.add('delete-btn');
-            delBtn.onclick = () => deleteItem(entity, item.id);
-            td.appendChild(delBtn);
-          }
-        });
-        const wrapper = document.createElement('div');
-        wrapper.classList.add('data-table');
-        wrapper.appendChild(table);
-        apiData.appendChild(wrapper);
-      }
-    }
-
-    async function deleteItem(entity, id) {
-      if (!confirm('Ali ste prepričani, da želite izbrisati ta vnos?')) return;
-      try {
-        const res = await fetch(`/api/${entity}/${id}`, {
-          method: 'DELETE',
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (res.ok) {
-          showNotification('Vnos uspešno izbrisan.');
+    if (annyang) {
+      const commands = {
+        'show achievements': () => {
+          document.getElementById('entity-selector').value = 'achievements';
           document.getElementById('load-entity').click();
-        } else {
-          showNotification('Brisanje vnosa ni uspelo.');
+          speakResponse("Achievements have been loaded.");
+        },
+        'log out': () => {
+          speakResponse("Goodbye, logging out.");
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          window.location.href = '/login.html';
+        },
+        'dark mode': () => {
+          document.body.classList.toggle('dark-mode');
+          document.getElementById('voice-info').classList.toggle('dark-mode');
+          speakResponse("Dark mode toggled.");
+        },
+        'add new entry': () => {
+          document.getElementById('add-entry').click();
+          speakResponse("Opening form for new entry.");
+        },
+        'show tasks': () => {
+          document.getElementById('entity-selector').value = 'tasks';
+          document.getElementById('load-entity').click();
+          speakResponse("Tasks have been loaded.");
         }
-      } catch (error) {
-        console.error('Napaka pri brisanju:', error);
-        showNotification('Med brisanjem je prišlo do napake.');
-      }
+      };
+
+      annyang.addCommands(commands);
+
+      annyang.addCallback('resultMatch', (userSaid, commandText, phrases) => {
+        console.log('Matched command:', commandText, 'User said:', userSaid);
+      });
+      
+      annyang.setLanguage('en-US');
+      
+      document.getElementById('start-voice').addEventListener('click', () => {
+        console.log("Start Voice button clicked");
+        speakResponse("Voice recognition activated.");
+        annyang.start({ continuous: true });
+      });
+    } else {
+      console.warn("Voice recognition is not supported in your browser.");
     }
   </script>
 </body>
