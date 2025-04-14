@@ -4,19 +4,101 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Login - Task Manager</title>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="login.css" />
+  <style>
+    /* Basic style for lazy loaded images */
+    img.lazy {
+      opacity: 0;
+      transition: opacity 0.3s ease-in-out;
+    }
+    img.lazy.loaded {
+      opacity: 1;
+    }
+    
+    /* Optional styling for the login container */
+    main {
+      max-width: 400px;
+      margin: 2rem auto;
+      padding: 1rem;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    main h1 {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    #login-error {
+      color: red;
+      margin-top: 1rem;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
-  <main style="max-width: 400px; margin: 2rem auto; padding: 1rem; background: #fff; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
-    <h1 style="text-align: center; margin-bottom: 1rem;">Login</h1>
+  <main>
+    <h1>Login</h1>
     <form id="login-form">
       <input type="text" id="username" placeholder="Username" required />
       <input type="password" id="password" placeholder="Password" required />
       <button type="submit">Log In</button>
     </form>
-    <p id="login-error" style="color: red; margin-top: 1rem; text-align: center;"></p>
+    <p id="login-error"></p>
   </main>
+
+  <div style="text-align: center; margin: 2rem 0;">
+    <h3>Nalagam lokalno sliko:</h3>
+    <img class="lazy" data-src="/images/image.png" alt="Lokalna slika" width="600" height="400" />
+  </div>
+
   <script>
+    // Function to initialize lazy loading using IntersectionObserver.
+    function initLazyLoading() {
+      const lazyImages = document.querySelectorAll('img.lazy');
+      console.log('[LazyLoad] Found', lazyImages.length, 'lazy images');
+      
+      if ('IntersectionObserver' in window) {
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              const img = entry.target;
+              const src = img.dataset.src;
+              console.log('[LazyLoad] Loading image:', src);
+              if (src) {
+                img.src = src;
+                img.addEventListener('load', () => {
+                  img.classList.add('loaded');
+                  console.log('[LazyLoad] Image loaded:', src);
+                });
+                img.addEventListener('error', () => {
+                  img.src = 'https://via.placeholder.com/600x400?text=Napaka+pri+sliki';
+                  img.classList.add('loaded');
+                  console.warn('[LazyLoad] Failed to load:', src);
+                });
+                observer.unobserve(img);
+              }
+            }
+          });
+        });
+        lazyImages.forEach(img => {
+          imageObserver.observe(img);
+        });
+      } else {
+        console.warn('[LazyLoad] IntersectionObserver not supported. Loading all images.');
+        lazyImages.forEach(img => {
+          const src = img.dataset.src;
+          if (src) {
+            img.src = src;
+            img.classList.add('loaded');
+          }
+        });
+      }
+    }
+
+    // Initialize lazy loading on DOM content loaded.
+    document.addEventListener("DOMContentLoaded", initLazyLoading);
+
+    // Login form handling.
     document.getElementById('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const username = document.getElementById('username').value.trim();

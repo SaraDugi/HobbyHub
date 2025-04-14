@@ -8,16 +8,6 @@
   <meta name="theme-color" content="#3f51b5" />
   <title>PWA Task Manager</title>
   <link rel="stylesheet" href="styles.css" />
-  <style>
-    /* Basic style for lazy loaded images */
-    img.lazy {
-      opacity: 0;
-      transition: opacity 0.3s ease-in-out;
-    }
-    img.lazy.loaded {
-      opacity: 1;
-    }
-  </style>
 </head>
 <body>
   <header>
@@ -27,12 +17,6 @@
       <button id="logout-btn">Odjava</button>
     </div>
   </header>
-
-  <!-- Local image inserted between header and API data section -->
-  <div style="text-align: center; margin: 2rem 0;">
-    <h3>Nalagam lokalno sliko:</h3>
-    <img class="lazy" data-src="/images/image.png" alt="Lokalna slika" width="600" height="400" />
-  </div>
 
   <h2>Prikaži podatke iz API-ja</h2>
   <div id="data-controls">
@@ -708,52 +692,8 @@
       if (document.getElementById('entity-selector').value === "achievements") {
         fetchAchievements();
       }
-      initLazyLoading();
     });
 
-    function initLazyLoading() {
-      const lazyImages = document.querySelectorAll('img.lazy');
-      console.log('[LazyLoad] Found', lazyImages.length, 'lazy images');
-    
-      if ('IntersectionObserver' in window) {
-        const imageObserver = new IntersectionObserver((entries, observer) => {
-          entries.forEach(entry => {
-            if (entry.isIntersecting) {
-              const img = entry.target;
-              const src = img.dataset.src;
-              console.log('[LazyLoad] Loading image:', src);
-              if (src) {
-                img.src = src;
-                img.addEventListener('load', () => {
-                  img.classList.add('loaded');
-                  console.log('[LazyLoad] Image loaded:', src);
-                });
-                img.addEventListener('error', () => {
-                  img.src = 'https://via.placeholder.com/600x400?text=Napaka+pri+sliki';
-                  img.classList.add('loaded');
-                  console.warn('[LazyLoad] Failed to load:', src);
-                });
-                observer.unobserve(img);
-              }
-            }
-          });
-        });
-    
-        lazyImages.forEach(img => {
-          imageObserver.observe(img);
-        });
-      } else {
-        console.warn('[LazyLoad] IntersectionObserver not supported. Loading all images.');
-        lazyImages.forEach(img => {
-          const src = img.dataset.src;
-          if (src) {
-            img.src = src;
-            img.classList.add('loaded');
-          }
-        });
-      }
-    }
-    
     function renderData(data, entity) {
       const mode = viewModeSelect.value;
       apiData.innerHTML = '';
@@ -860,16 +800,5 @@
       }
     }
   </script>
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const fallbackImage = 'https://via.placeholder.com/600x400?text=Slika+ni+na+voljo';
-      document.querySelectorAll('img.lazy').forEach(img => {
-        img.addEventListener('error', () => {
-          img.src = fallbackImage;
-          img.classList.add('loaded');
-        });
-      });
-    });
-  </script>  
 </body>
 </html>
